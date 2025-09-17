@@ -1,0 +1,54 @@
+# Security Headers
+
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options DENY
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Hide sensitive files
+
+<Files "\*.sql">
+Order allow,deny
+Deny from all
+</Files>
+
+<Files "\*.md">
+Order allow,deny
+Deny from all
+</Files>
+
+# Prevent access to config directory
+
+<Directory "config">
+Order allow,deny
+Deny from all
+</Directory>
+
+# Prevent access to includes directory
+
+<Directory "includes">
+Order allow,deny
+Deny from all
+</Directory>
+
+# Prevent access to models directory
+
+<Directory "models">
+Order allow,deny
+Deny from all
+</Directory>
+
+# Enable URL rewriting
+
+RewriteEngine On
+
+# Redirect to HTTPS (uncomment if you have SSL)
+
+# RewriteCond %{HTTPS} off
+
+# RewriteRule ^(.\*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Custom error pages
+
+ErrorDocument 404 /404.html
+ErrorDocument 500 /500.html

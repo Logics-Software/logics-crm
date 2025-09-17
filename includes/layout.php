@@ -43,14 +43,37 @@ $current_user->getUserById($_SESSION['user_id']);
                 </div>
                 <div class="user-section">
                     <div class="user-info">
-                        <?php if(!empty($current_user->foto_profile)): ?>
-                            <img src="uploads/profiles/<?php echo htmlspecialchars($current_user->foto_profile ?? ''); ?>" 
-                                 alt="Foto Profile" class="user-avatar">
-                        <?php else: ?>
-                            <div class="user-avatar bg-white d-flex align-items-center justify-content-center">
-                                <i class="fas fa-user text-primary"></i>
-                            </div>
-                        <?php endif; ?>
+                        <div class="avatar-container position-relative">
+                            <?php if(!empty($current_user->foto_profile)): ?>
+                                <img src="uploads/profiles/<?php echo htmlspecialchars($current_user->foto_profile ?? ''); ?>" 
+                                     alt="Foto Profile" class="user-avatar">
+                            <?php else: ?>
+                                <div class="user-avatar bg-white d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php 
+                            // Show notification badge for developer users
+                            if ($current_user->developer == 1) {
+                                require_once 'config/database.php';
+                                $database = new Database();
+                                $db = $database->getConnection();
+                                
+                                $stmt = $db->prepare("SELECT COUNT(*) as total FROM komplain WHERE status = 'komplain'");
+                                $stmt->execute();
+                                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                                $komplain_count = $result['total'];
+                                
+                                if ($komplain_count > 0): ?>
+                                    <a href="komplain.php" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger komplain-badge text-decoration-none" style="margin-left: -10px !important; margin-top: 5px !important;"
+                                       title="<?php echo $komplain_count; ?> komplain menunggu">
+                                        <?php echo $komplain_count > 99 ? '99+' : $komplain_count; ?>
+                                    </a>
+                                <?php endif;
+                            }
+                            ?>
+                        </div>
                         <span class="user-name"><?php echo htmlspecialchars($current_user->nama ?? 'User'); ?></span>
                     </div>
                     <div class="dropdown">

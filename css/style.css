@@ -264,10 +264,12 @@ body.install-page {
 
 .modal-header {
   border-bottom: 1px solid #dee2e6;
+  background-color: #99a2ec;
 }
 
 .modal-footer {
   border-top: 1px solid #dee2e6;
+  background-color: #99a2ec;
 }
 
 /* Profile Page Styles */
@@ -830,4 +832,62 @@ body {
   background-color: #c82333;
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+}
+
+/* Komplain Notification Badge */
+.avatar-container {
+  position: relative;
+  display: inline-block;
+}
+
+.komplain-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 20px;
+  height: 20px;
+  padding: 0.25rem 0.45rem;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  animation: gentlePulse 3s infinite;
+  transform: translate(-12px, 5px);
+  transition: all 0.3s ease;
+}
+
+.komplain-badge:hover {
+  transform: translate(-12px, 5px) scale(1.15);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.6);
+  transition: all 0.3s ease;
+  color: white !important;
+  text-decoration: none !important;
+}
+
+@keyframes gentlePulse {
+  0% {
+    transform: translate(-12px, 5px) scale(1);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  }
+  50% {
+    transform: translate(-12px, 5px) scale(1.08);
+    box-shadow: 0 3px 8px rgba(220, 53, 69, 0.5);
+  }
+  100% {
+    transform: translate(-12px, 5px) scale(1);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.4);
+  }
+}
+
+/* Responsive badge */
+@media (max-width: 768px) {
+  .komplain-badge {
+    font-size: 0.65rem;
+    min-width: 16px;
+    height: 16px;
+    padding: 0.2rem 0.35rem;
+    transform: translate(-10px, 3px);
+  }
+
+  .komplain-badge:hover {
+    transform: translate(-10px, 3px) scale(1.15);
+  }
 }

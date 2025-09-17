@@ -381,8 +381,8 @@ startLayoutBuffer('Komplain');
                         <tr>
                             <th>No</th>
                             <th><a href="<?php echo getSortUrl('subyek', $sort_by, $sort_order, $search, $status_filter, $limit); ?>" class="text-white text-decoration-none">Subyek <?php echo $sort_by == 'subyek' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
-                            <th>Support</th>
                             <th>Klien</th>
+                            <th>Support</th>
                             <th><a href="<?php echo getSortUrl('status', $sort_by, $sort_order, $search, $status_filter, $limit); ?>" class="text-white text-decoration-none">Status <?php echo $sort_by == 'status' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
                             <th><a href="<?php echo getSortUrl('created_at', $sort_by, $sort_order, $search, $status_filter, $limit); ?>" class="text-white text-decoration-none">Tanggal <?php echo $sort_by == 'created_at' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
                             <th>Aksi</th>
@@ -399,15 +399,15 @@ startLayoutBuffer('Komplain');
                                     <td><?php echo ($page - 1) * $limit + $komplain_data->rowCount(); ?></td>
                                     <td><?php echo htmlspecialchars($k['subyek']); ?></td>
                                     <td>
-                                        <?php if(!empty($k['nama_support'])): ?>
-                                            <span class="badge bg-info"><?php echo htmlspecialchars($k['nama_support']); ?></span>
+                                        <?php if(!empty($k['nama_klien'])): ?>
+                                            <span><?php echo htmlspecialchars($k['nama_klien']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <?php if(!empty($k['nama_klien'])): ?>
-                                            <span class="badge bg-primary"><?php echo htmlspecialchars($k['nama_klien']); ?></span>
+                                        <?php if(!empty($k['nama_support'])): ?>
+                                            <span><?php echo htmlspecialchars($k['nama_support']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>
@@ -489,14 +489,12 @@ startLayoutBuffer('Komplain');
                     <input type="hidden" name="action" value="create">
                     
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="subyek" class="form-label">Subyek <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="subyek" name="subyek" required>
                         </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
+
+                        <div class="col-md-6 mb-3">
                             <label for="idklien" class="form-label">Klien <span class="text-danger">*</span></label>
                             <select class="form-select" id="idklien" name="idklien" required>
                                 <option value="">Pilih Klien</option>
@@ -671,6 +669,40 @@ startLayoutBuffer('Komplain');
     </div>
 </div>
 
+<!-- Image Zoom Modal -->
+<div class="modal fade" id="imageZoomModal" tabindex="-1" aria-labelledby="imageZoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageZoomModalLabel">Gambar Komplain</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="image-zoom-container" style="position: relative; overflow: hidden; max-height: 80vh;">
+                    <img id="zoomedImage" src="" alt="Gambar Komplain" class="img-fluid" style="max-width: 100%; max-height: 100%; cursor: grab; transition: transform 0.3s ease; user-select: none;">
+                </div>
+                <div class="mt-3 zoom-controls">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="zoomInBtn">
+                        <i class="fas fa-search-plus"></i> Zoom In
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="zoomOutBtn">
+                        <i class="fas fa-search-minus"></i> Zoom Out
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="resetZoomBtn">
+                        <i class="fas fa-expand-arrows-alt"></i> Reset
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm" id="downloadImageBtn">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -694,6 +726,93 @@ startLayoutBuffer('Komplain');
         </div>
     </div>
 </div>
+
+<style>
+/* Image Zoom Modal Styles */
+#imageZoomModal .modal-dialog {
+    max-width: 95vw;
+    max-height: 95vh;
+    height: 90vh;
+    min-height: 600px;
+}
+
+#imageZoomModal .modal-body {
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.image-zoom-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    height: 70vh;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#zoomedImage {
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    user-select: none;
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+}
+
+#zoomedImage.dragging {
+    cursor: grabbing !important;
+    transition: none !important;
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.zoom-controls .btn {
+    min-width: 120px;
+}
+
+/* Thumbnail hover effect */
+.img-thumbnail {
+    transition: all 0.3s ease;
+    border: 2px solid #dee2e6;
+}
+
+.img-thumbnail:hover {
+    border-color: #007bff;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #imageZoomModal .modal-dialog {
+        max-width: 100vw;
+        margin: 0;
+        height: 100vh;
+        min-height: 100vh;
+    }
+    
+    .image-zoom-container {
+        height: 60vh;
+        min-height: 400px;
+    }
+    
+    .zoom-controls .btn {
+        min-width: 80px;
+        font-size: 0.875rem;
+    }
+}
+</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -813,18 +932,26 @@ function viewKomplain(komplain) {
     document.getElementById('view_updated_at').textContent = new Date(komplain.updated_at).toLocaleString('id-ID');
     document.getElementById('view_kompain').innerHTML = komplain.kompain;
     
-    // Display images
+    // Display images with zoom functionality
     const imagesContainer = document.getElementById('view_images');
     imagesContainer.innerHTML = '';
     if (komplain.image) {
         const images = JSON.parse(komplain.image);
         if (images && images.length > 0) {
-            images.forEach(image => {
+            images.forEach((image, index) => {
                 const img = document.createElement('img');
                 img.src = 'uploads/komplain/images/' + image;
                 img.className = 'img-thumbnail me-2 mb-2';
                 img.style.maxWidth = '150px';
                 img.style.maxHeight = '150px';
+                img.style.cursor = 'pointer';
+                img.title = 'Klik untuk zoom';
+                
+                // Add click event for zoom
+                img.addEventListener('click', function() {
+                    showImageZoom('uploads/komplain/images/' + image, image);
+                });
+                
                 imagesContainer.appendChild(img);
             });
         } else {
@@ -858,6 +985,204 @@ function viewKomplain(komplain) {
     const modal = new bootstrap.Modal(document.getElementById('viewKomplainModal'));
     modal.show();
 }
+
+// Image zoom functionality
+let currentZoom = 1;
+let currentImageSrc = '';
+let currentImageName = '';
+let isDragging = false;
+let startX = 0;
+let startY = 0;
+let translateX = 0;
+let translateY = 0;
+
+function showImageZoom(imageSrc, imageName) {
+    currentImageSrc = imageSrc;
+    currentImageName = imageName;
+    currentZoom = 1;
+    translateX = 0;
+    translateY = 0;
+    isDragging = false;
+    
+    const zoomedImage = document.getElementById('zoomedImage');
+    zoomedImage.src = imageSrc;
+    zoomedImage.style.transform = 'scale(1) translate(0px, 0px)';
+    zoomedImage.classList.remove('dragging');
+    
+    const modal = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+    modal.show();
+}
+
+// Zoom controls
+document.addEventListener('DOMContentLoaded', function() {
+    const zoomedImage = document.getElementById('zoomedImage');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetZoomBtn = document.getElementById('resetZoomBtn');
+    const downloadImageBtn = document.getElementById('downloadImageBtn');
+    
+    // Zoom In
+    zoomInBtn.addEventListener('click', function() {
+        currentZoom += 0.25;
+        if (currentZoom > 3) currentZoom = 3;
+        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    });
+    
+    // Zoom Out
+    zoomOutBtn.addEventListener('click', function() {
+        currentZoom -= 0.25;
+        if (currentZoom < 0.25) currentZoom = 0.25;
+        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    });
+    
+    // Reset Zoom
+    resetZoomBtn.addEventListener('click', function() {
+        currentZoom = 1;
+        translateX = 0;
+        translateY = 0;
+        zoomedImage.style.transform = 'scale(1) translate(0px, 0px)';
+    });
+    
+    // Download Image
+    downloadImageBtn.addEventListener('click', function() {
+        if (currentImageSrc) {
+            const link = document.createElement('a');
+            link.href = currentImageSrc;
+            link.download = currentImageName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    });
+    
+    // Mouse wheel zoom
+    zoomedImage.addEventListener('wheel', function(e) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            // Zoom in
+            currentZoom += 0.1;
+            if (currentZoom > 3) currentZoom = 3;
+        } else {
+            // Zoom out
+            currentZoom -= 0.1;
+            if (currentZoom < 0.25) currentZoom = 0.25;
+        }
+        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    });
+    
+    // Double click to reset zoom
+    zoomedImage.addEventListener('dblclick', function() {
+        currentZoom = 1;
+        translateX = 0;
+        translateY = 0;
+        zoomedImage.style.transform = 'scale(1) translate(0px, 0px)';
+    });
+    
+    // Drag/Pan functionality
+    zoomedImage.addEventListener('mousedown', function(e) {
+        if (currentZoom > 1) {
+            isDragging = true;
+            startX = e.clientX - translateX;
+            startY = e.clientY - translateY;
+            zoomedImage.classList.add('dragging');
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('mousemove', function(e) {
+        if (isDragging && currentZoom > 1) {
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+        }
+    });
+    
+    document.addEventListener('mouseup', function() {
+        if (isDragging) {
+            isDragging = false;
+            zoomedImage.classList.remove('dragging');
+        }
+    });
+    
+    // Touch support for mobile
+    zoomedImage.addEventListener('touchstart', function(e) {
+        if (currentZoom > 1 && e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - translateX;
+            startY = e.touches[0].clientY - translateY;
+            zoomedImage.classList.add('dragging');
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('touchmove', function(e) {
+        if (isDragging && currentZoom > 1 && e.touches.length === 1) {
+            translateX = e.touches[0].clientX - startX;
+            translateY = e.touches[0].clientY - startY;
+            zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('touchend', function() {
+        if (isDragging) {
+            isDragging = false;
+            zoomedImage.classList.remove('dragging');
+        }
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (document.getElementById('imageZoomModal').classList.contains('show')) {
+            switch(e.key) {
+                case '+':
+                case '=':
+                    e.preventDefault();
+                    zoomInBtn.click();
+                    break;
+                case '-':
+                    e.preventDefault();
+                    zoomOutBtn.click();
+                    break;
+                case '0':
+                    e.preventDefault();
+                    resetZoomBtn.click();
+                    break;
+                case 'ArrowLeft':
+                    if (currentZoom > 1) {
+                        e.preventDefault();
+                        translateX += 20;
+                        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (currentZoom > 1) {
+                        e.preventDefault();
+                        translateX -= 20;
+                        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+                    }
+                    break;
+                case 'ArrowUp':
+                    if (currentZoom > 1) {
+                        e.preventDefault();
+                        translateY += 20;
+                        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (currentZoom > 1) {
+                        e.preventDefault();
+                        translateY -= 20;
+                        zoomedImage.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+                    }
+                    break;
+                case 'Escape':
+                    bootstrap.Modal.getInstance(document.getElementById('imageZoomModal')).hide();
+                    break;
+            }
+        }
+    });
+});
 </script>
 
 <?php

@@ -198,23 +198,6 @@ startLayoutBuffer('Dashboard - Logics Software');
                 </div>
             </div>
         </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-info me-3">
-                            <i class="fas fa-user-friends"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Total User</h6>
-                            <h3 class="mb-0"><?php echo number_format($total_users); ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
                                         
     <!-- Project Status Chart -->

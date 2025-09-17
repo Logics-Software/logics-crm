@@ -6,9 +6,10 @@ function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
-// Check if user is direktur
-function isDirektur() {
-    return isset($_SESSION['role']) && $_SESSION['role'] === 'direktur';
+// Check if user is support (by role or job)
+function isSupport() {
+    return (isset($_SESSION['role']) && $_SESSION['role'] === 'support') || 
+           (isset($_SESSION['support']) && $_SESSION['support'] == 1);
 }
 
 // Check if user is admin
@@ -34,15 +35,6 @@ function requireLogin() {
     }
 }
 
-// Redirect to login if not direktur
-function requireDirektur() {
-    requireLogin();
-    if (!isDirektur()) {
-        header("Location: dashboard.php");
-        exit();
-    }
-}
-
 // Redirect to login if not admin
 function requireAdmin() {
     requireLogin();
@@ -61,6 +53,33 @@ function requireUserOrAdmin() {
     }
 }
 
+// Redirect to login if not support
+function requireSupport() {
+    requireLogin();
+    if (!isSupport()) {
+        header("Location: dashboard.php");
+        exit();
+    }
+}
+
+// Redirect to login if not client
+function requireClient() {
+    requireLogin();
+    if (!isClient()) {
+        header("Location: dashboard.php");
+        exit();
+    }
+}
+
+// Redirect to login if not support or client
+function requireSupportOrClient() {
+    requireLogin();
+    if (!isSupport() && !isClient()) {
+        header("Location: dashboard.php");
+        exit();
+    }
+}
+
 // Get current user ID
 function getCurrentUserId() {
     return isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
@@ -69,6 +88,21 @@ function getCurrentUserId() {
 // Get current user role
 function getCurrentUserRole() {
     return isset($_SESSION['role']) ? $_SESSION['role'] : null;
+}
+
+// Get current user support
+function getCurrentUserSupport() {
+    return isset($_SESSION['support']) ? $_SESSION['support'] : null;
+}
+
+// Get current user developer
+function getCurrentUserDeveloper() {
+    return isset($_SESSION['developer']) ? $_SESSION['developer'] : null;
+}
+
+// Get current user developer
+function getCurrentUserTagihan() {
+    return isset($_SESSION['tagihan']) ? $_SESSION['tagihan'] : null;
 }
 
 // Get current user name
@@ -98,13 +132,16 @@ function hasPermission($action) {
         case 'manage_users':
             return $role === 'admin';
         case 'view_dashboard':
-            return in_array($role, ['admin', 'user', 'client']);
+            return in_array($role, ['admin', 'user', 'client', 'support']);
         case 'manage_clients':
-            return in_array($role, ['admin', 'user']);
+            return in_array($role, ['admin', 'user', 'support']);
         case 'manage_projects':
-            return in_array($role, ['admin', 'user']);
+            return in_array($role, ['admin', 'user', 'support']);
+        case 'manage_komplain':
+            return in_array($role, ['admin', 'support', 'client']) || 
+                   (isset($_SESSION['support']) && $_SESSION['support'] == 1);
         case 'edit_profile':
-            return in_array($role, ['admin', 'user', 'client']);
+            return in_array($role, ['admin', 'user', 'client', 'support']);
         default:
             return false;
     }

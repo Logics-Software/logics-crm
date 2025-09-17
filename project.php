@@ -752,25 +752,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    console.log('Initializing Quill editors...');
-    
     // Initialize Quill editors
     try {
         if (document.getElementById('deskripsiproyek')) {
             deskripsiQuill = new Quill('#deskripsiproyek', quillConfig);
-            console.log('Deskripsi Quill initialized');
         }
         if (document.getElementById('developer')) {
             developerQuill = new Quill('#developer', quillConfig);
-            console.log('Developer Quill initialized');
         }
         if (document.getElementById('edit_deskripsiproyek')) {
             editDeskripsiQuill = new Quill('#edit_deskripsiproyek', quillConfig);
-            console.log('Edit Deskripsi Quill initialized');
         }
         if (document.getElementById('edit_developer')) {
             editDeveloperQuill = new Quill('#edit_developer', quillConfig);
-            console.log('Edit Developer Quill initialized');
         }
     } catch (error) {
         console.error('Error initializing Quill editors:', error);

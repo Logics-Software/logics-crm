@@ -91,8 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $new_password = $_POST['new_password'];
             $confirm_password = $_POST['confirm_password'];
             
+            // Get current password hash from database for validation
+            $stmt = $db->prepare("SELECT password FROM users WHERE id = :id");
+            $stmt->bindParam(':id', $_SESSION['user_id']);
+            $stmt->execute();
+            $current_user_data = $stmt->fetch(PDO::FETCH_ASSOC);
+            
             // Verify current password
-            if (!password_verify($current_password, $user->password)) {
+            if (!password_verify($current_password, $current_user_data['password'])) {
                 $message = 'Password lama tidak benar!';
                 $message_type = 'danger';
             } elseif ($new_password !== $confirm_password) {
@@ -102,7 +108,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $message = 'Password baru minimal 6 karakter!';
                 $message_type = 'danger';
             } else {
-                if($user->updatePassword($new_password)) {
+                // Hash new password before updating
+                $hashed_new_password = password_hash($new_password, PASSWORD_DEFAULT);
+                if($user->updatePassword($hashed_new_password)) {
                     $message = 'Password berhasil diubah!';
                     $message_type = 'success';
                 } else {

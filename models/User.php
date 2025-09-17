@@ -169,7 +169,7 @@ class User {
         
         $stmt = $this->conn->prepare($query);
         
-        $this->password = password_hash($this->password, PASSWORD_DEFAULT);
+        // Password already hashed in controller
         
         $stmt->bindParam(':username', $this->username);
         $stmt->bindParam(':password', $this->password);
@@ -217,7 +217,6 @@ class User {
         $stmt->bindParam(':id', $this->id);
         
         if(!empty($this->password)) {
-            $this->password = password_hash($this->password, PASSWORD_DEFAULT);
             $stmt->bindParam(':password', $this->password);
         }
         
@@ -267,7 +266,7 @@ class User {
     }
 
     // Update password only
-    public function updatePassword() {
+    public function updatePassword($hashed_password) {
         $query = "UPDATE " . $this->table_name . " 
                   SET password = :password
                   WHERE id = :id";
@@ -275,9 +274,7 @@ class User {
         $stmt = $this->conn->prepare($query);
         
         // Password is already hashed in the calling function
-        $this->id = htmlspecialchars(strip_tags($this->id));
-        
-        $stmt->bindParam(':password', $this->password);
+        $stmt->bindParam(':password', $hashed_password);
         $stmt->bindParam(':id', $this->id);
         
         if($stmt->execute()) {

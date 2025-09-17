@@ -28,7 +28,6 @@ $current_user->getUserById($_SESSION['user_id']);
             if (typeof Quill === 'undefined') {
                 console.error('Quill.js failed to load');
             } else {
-                console.log('Quill.js loaded successfully');
             }
         });
     </script>
@@ -99,6 +98,14 @@ $current_user->getUserById($_SESSION['user_id']);
                         Data Project
                     </a>
                 </li>
+                <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1 || $_SESSION['role'] == 'client'): ?>
+                <li>
+                    <a href="komplain.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'komplain.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Komplain
+                    </a>
+                </li>
+                <?php endif; ?>
                 <?php if($_SESSION['role'] == 'admin'): ?>
                 <li>
                     <a href="users.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : ''; ?>">
@@ -139,6 +146,12 @@ $current_user->getUserById($_SESSION['user_id']);
                 <i class="fas fa-project-diagram"></i>
                 <span>Project</span>
             </a>
+            <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1 || $_SESSION['role'] == 'client'): ?>
+            <a href="komplain.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'komplain.php' ? 'active' : ''; ?>">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Komplain</span>
+            </a>
+            <?php endif; ?>
             <?php if($_SESSION['role'] == 'admin'): ?>
             <a href="users.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : ''; ?>">
                 <i class="fas fa-user-cog"></i>

@@ -302,7 +302,7 @@ startLayoutBuffer('Data Project - Logics Software');
                     
                     <div class="mb-3">
                         <label for="deskripsiproyek" class="form-label">Deskripsi Project</label>
-                        <div id="deskripsiproyek" style="min-height: 200px;"></div>
+                        <div id="deskripsiproyek" class="ql-editor"></div>
                         <textarea name="deskripsiproyek" style="display: none;"></textarea>
                     </div>
                     
@@ -323,7 +323,7 @@ startLayoutBuffer('Data Project - Logics Software');
                     
                     <div class="mb-3">
                         <label for="developer" class="form-label">Developer</label>
-                        <div id="developer" style="min-height: 200px;"></div>
+                        <div id="developer" class="ql-editor"></div>
                         <textarea name="developer" style="display: none;"></textarea>
                     </div>
                     
@@ -411,7 +411,7 @@ startLayoutBuffer('Data Project - Logics Software');
                     
                     <div class="mb-3">
                         <label for="edit_deskripsiproyek" class="form-label">Deskripsi Project</label>
-                        <div id="edit_deskripsiproyek" style="min-height: 200px;"></div>
+                        <div id="edit_deskripsiproyek" class="ql-editor"></div>
                         <textarea name="deskripsiproyek" style="display: none;"></textarea>
                     </div>
                     
@@ -432,7 +432,7 @@ startLayoutBuffer('Data Project - Logics Software');
                     
                     <div class="mb-3">
                         <label for="edit_developer" class="form-label">Developer</label>
-                        <div id="edit_developer" style="min-height: 200px;"></div>
+                        <div id="edit_developer" class="ql-editor"></div>
                         <textarea name="developer" style="display: none;"></textarea>
                     </div>
                     
@@ -539,80 +539,6 @@ startLayoutBuffer('Data Project - Logics Software');
     </div>
 </div>
 
-<style>
-/* Hide sidebar on mobile */
-@media (max-width: 767.98px) {
-    .sidebar {
-        display: none !important;
-    }
-}
-
-/* Custom styles for better UX */
-.table th {
-    border-top: none;
-    font-weight: 600;
-}
-
-/* Termin fields styling */
-.termin-field-hidden {
-    display: none !important;
-}
-
-.termin-field-visible {
-    display: block !important;
-}
-
-/* Smooth transition for termin fields */
-.col-md-3 {
-    transition: all 0.3s ease;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.badge {
-    font-size: 0.75rem;
-}
-
-.pagination {
-    margin-top: 1rem;
-}
-
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.alert {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.modal-content {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.modal-header {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.modal-footer {
-    border-top: 1px solid #dee2e6;
-}
-</style>
 
 <script>
 // Format number input with thousand separators
@@ -798,7 +724,7 @@ const quillConfig = {
             ['clean']
         ]
     },
-    placeholder: 'Ketik deskripsi project...',
+    placeholder: 'Ketik disini...',
     bounds: document.body
 };
 

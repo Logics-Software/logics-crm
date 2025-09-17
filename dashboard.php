@@ -281,24 +281,6 @@ startLayoutBuffer('Dashboard - Logics Software');
     </div>
 </div>
 
-<style>
-.stat-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    color: white;
-}
-
-.stat-icon.bg-primary { background-color: #667eea; }
-.stat-icon.bg-success { background-color: #56ab2f; }
-.stat-icon.bg-danger { background-color: #ff416c; }
-.stat-icon.bg-warning { background-color: #f093fb; }
-.stat-icon.bg-info { background-color: #4facfe; }
-</style>
 
 <?php
 // End layout

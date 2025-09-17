@@ -166,6 +166,26 @@ if($_POST) {
                 $user->support = isset($_POST['support']) ? 1 : 0;
                 $user->tagihan = isset($_POST['tagihan']) ? 1 : 0;
                 
+                // Check if trying to deactivate admin user
+                $existing_user = new User($db);
+                $existing_user->getUserById($user->id);
+                
+                if($existing_user->role === 'admin' && $user->status === 'non aktif') {
+                    $message = 'User dengan role Admin tidak dapat dinonaktifkan!';
+                    $message_type = 'danger';
+                    
+                    if($is_ajax) {
+                        header('Content-Type: application/json');
+                        echo json_encode([
+                            'success' => false,
+                            'message' => $message,
+                            'message_type' => $message_type
+                        ]);
+                        exit;
+                    }
+                    break;
+                }
+                
                 // Check if username already exists (excluding current user)
                 if($user->usernameExists($user->username, $user->id)) {
                     $message = 'Username sudah digunakan! Silakan gunakan username lain.';
@@ -248,19 +268,26 @@ if($_POST) {
             case 'delete':
                 $user->id = $_POST['id'];
                 
-                // Delete photo if exists
+                // Check if user is admin - prevent deletion
                 $existing_user = new User($db);
                 $existing_user->getUserById($user->id);
-                if(!empty($existing_user->foto_profile) && file_exists('uploads/profiles/' . $existing_user->foto_profile)) {
-                    unlink('uploads/profiles/' . $existing_user->foto_profile);
-                }
                 
-                if($user->delete()) {
-                    $message = 'User berhasil dihapus!';
-                    $message_type = 'success';
-                } else {
-                    $message = 'Gagal menghapus user!';
+                if($existing_user->role === 'admin') {
+                    $message = 'User dengan role Admin tidak dapat dihapus!';
                     $message_type = 'danger';
+                } else {
+                    // Delete photo if exists
+                    if(!empty($existing_user->foto_profile) && file_exists('uploads/profiles/' . $existing_user->foto_profile)) {
+                        unlink('uploads/profiles/' . $existing_user->foto_profile);
+                    }
+                    
+                    if($user->delete()) {
+                        $message = 'User berhasil dihapus!';
+                        $message_type = 'success';
+                    } else {
+                        $message = 'Gagal menghapus user!';
+                        $message_type = 'danger';
+                    }
                 }
                 break;
         }
@@ -397,11 +424,13 @@ startLayoutBuffer('Manajemen User - Logics Software');
                                                 data-user='<?php echo json_encode($u, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-edit"></i>
                                         </button>
+                                        <?php if($u['role'] !== 'admin'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
                                                 data-id="<?php echo $u['id']; ?>" 
                                                 data-name="<?php echo htmlspecialchars($u['nama'] ?? ''); ?>">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -529,7 +558,7 @@ startLayoutBuffer('Manajemen User - Logics Software');
                             <select class="form-select" id="status" name="status" required>
                                 <option value="">Pilih Status</option>
                                 <option value="aktif">Aktif</option>
-                                <option value="nonaktif">Non Aktif</option>
+                                <option value="non aktif">Non Aktif</option>
                             </select>
                         </div>
                         
@@ -640,7 +669,7 @@ startLayoutBuffer('Manajemen User - Logics Software');
                             <select class="form-select" id="edit_status" name="status" required>
                                 <option value="">Pilih Status</option>
                                 <option value="aktif">Aktif</option>
-                                <option value="nonaktif">Non Aktif</option>
+                                <option value="non aktif" id="edit_nonaktif_option">Non Aktif</option>
                             </select>
                         </div>
                     </div>
@@ -722,119 +751,6 @@ startLayoutBuffer('Manajemen User - Logics Software');
     </div>
 </div>
 
-<style>
-/* Hide sidebar on mobile */
-@media (max-width: 767.98px) {
-    .sidebar {
-        display: none !important;
-    }
-}
-
-/* Style for disabled checkboxes */
-.form-check-input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.form-check-input:disabled + .form-check-label {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-/* Visual indicator for client role */
-.role-client-info {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    color: #6c757d;
-}
-
-/* Error Modal Styles */
-#errorModal .modal-header {
-    background-color: #dc3545;
-    color: white;
-    border-radius: 15px 15px 0 0;
-}
-
-#errorModal .modal-content {
-    border-radius: 15px;
-    border: none;
-    box-shadow: 0 10px 30px rgba(220, 53, 69, 0.3);
-}
-
-#errorModal .modal-body {
-    padding: 30px;
-}
-
-#errorModal .btn-close {
-    filter: brightness(0) invert(1);
-}
-
-#errorModal .btn-primary {
-    background-color: #dc3545;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 30px;
-    font-weight: 500;
-}
-
-#errorModal .btn-primary:hover {
-    background-color: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
-}
-
-/* Custom styles for better UX */
-.table th {
-    border-top: none;
-    font-weight: 600;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.badge {
-    font-size: 0.75rem;
-}
-
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.alert {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.modal-content {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.modal-header {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.modal-footer {
-    border-top: 1px solid #dee2e6;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -956,6 +872,14 @@ function editUser(user) {
         document.getElementById('edit_alamat').value = user.alamat;
         document.getElementById('edit_role').value = user.role;
         document.getElementById('edit_status').value = user.status;
+        
+        // Hide "Non Aktif" option for admin users
+        const nonaktifOption = document.getElementById('edit_nonaktif_option');
+        if (user.role === 'admin') {
+            nonaktifOption.style.display = 'none';
+        } else {
+            nonaktifOption.style.display = 'block';
+        }
         
         // Set checkbox values
         document.getElementById('edit_developer').checked = user.developer == 1;

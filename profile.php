@@ -258,54 +258,6 @@ startLayoutBuffer('Profile - Logics Software');
     </div>
 </div>
 
-<style>
-/* Hide sidebar on mobile */
-@media (max-width: 767.98px) {
-    .sidebar {
-        display: none !important;
-    }
-}
-
-/* Custom styles for better UX */
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.nav-tabs .nav-link {
-    border: none;
-    color: #6c757d;
-}
-
-.nav-tabs .nav-link.active {
-    color: #495057;
-    background-color: transparent;
-    border-bottom: 2px solid #007bff;
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.alert {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.btn {
-    border-radius: 0.375rem;
-}
-
-.border-end {
-    border-right: 1px solid #dee2e6 !important;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

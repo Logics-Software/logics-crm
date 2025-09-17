@@ -65,9 +65,9 @@ class Klien {
 
     // Create klien
     public function create() {
-        // Auto-set status to 'nonaktif' if pekerjaan is 'selesai'
+        // Auto-set status to 'non aktif' if pekerjaan is 'selesai'
         if($this->pekerjaan == 'selesai') {
-            $this->status = 'nonaktif';
+            $this->status = 'non aktif';
         }
         
         $query = "INSERT INTO " . $this->table_name . " 
@@ -97,9 +97,9 @@ class Klien {
 
     // Update klien
     public function update() {
-        // Auto-set status to 'nonaktif' if pekerjaan is 'selesai'
+        // Auto-set status to 'non aktif' if pekerjaan is 'selesai'
         if($this->pekerjaan == 'selesai') {
-            $this->status = 'nonaktif';
+            $this->status = 'non aktif';
         }
         
         $query = "UPDATE " . $this->table_name . " 

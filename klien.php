@@ -72,9 +72,9 @@ if($_POST) {
                 $klien->pekerjaan = $_POST['pekerjaan'];
                 $klien->iduser = $_SESSION['user_id'];
                 
-                // Auto set status to nonaktif if pekerjaan is selesai
+                // Auto set status to non aktif if pekerjaan is selesai
                 if($_POST['pekerjaan'] === 'selesai') {
-                    $klien->status = 'nonaktif';
+                    $klien->status = 'non aktif';
                 } else {
                     $klien->status = $_POST['status'];
                 }
@@ -109,9 +109,9 @@ if($_POST) {
                 $klien->pekerjaan = $_POST['pekerjaan'];
                 $klien->iduser = $_POST['iduser'];
                 
-                // Auto set status to nonaktif if pekerjaan is selesai
+                // Auto set status to non aktif if pekerjaan is selesai
                 if($_POST['pekerjaan'] === 'selesai') {
-                    $klien->status = 'nonaktif';
+                    $klien->status = 'non aktif';
                 } else {
                     $klien->status = $_POST['status'];
                 }
@@ -196,7 +196,7 @@ startLayoutBuffer('Data Klien - Logics Software');
                     <select class="form-select" id="status" name="status">
                         <option value="">Semua Status</option>
                         <option value="aktif" <?php echo $status_filter === 'aktif' ? 'selected' : ''; ?>>Aktif</option>
-                        <option value="nonaktif" <?php echo $status_filter === 'nonaktif' ? 'selected' : ''; ?>>Non Aktif</option>
+                        <option value="non aktif" <?php echo $status_filter === 'non aktif' ? 'selected' : ''; ?>>Non Aktif</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -409,13 +409,6 @@ startLayoutBuffer('Data Klien - Logics Software');
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                            <select class="form-select" id="status" name="status" required>
-                                <option value="aktif">Aktif</option>
-                                <option value="nonaktif">Non Aktif</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
                             <label for="iduser" class="form-label">Support User</label>
                             <select class="form-select" id="iduser" name="iduser">
                                 <option value="">Pilih Support User</option>
@@ -424,6 +417,13 @@ startLayoutBuffer('Data Klien - Logics Software');
                                         <?php echo htmlspecialchars($user['nama']); ?> (<?php echo ucfirst($user['role']); ?>)
                                     </option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="aktif">Aktif</option>
+                                <option value="non aktif">Non Aktif</option>
                             </select>
                         </div>
                     </div>
@@ -507,13 +507,6 @@ startLayoutBuffer('Data Klien - Logics Software');
                     
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="edit_status" class="form-label">Status <span class="text-danger">*</span></label>
-                            <select class="form-select" id="edit_status" name="status" required>
-                                <option value="aktif">Aktif</option>
-                                <option value="nonaktif">Non Aktif</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
                             <label for="edit_iduser_select" class="form-label">Support User</label>
                             <select class="form-select" id="edit_iduser_select" name="iduser">
                                 <option value="">Pilih Support User</option>
@@ -522,6 +515,13 @@ startLayoutBuffer('Data Klien - Logics Software');
                                         <?php echo htmlspecialchars($user['nama']); ?> (<?php echo ucfirst($user['role']); ?>)
                                     </option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_status" name="status" required>
+                                <option value="aktif">Aktif</option>
+                                <option value="non aktif">Non Aktif</option>
                             </select>
                         </div>
                     </div>
@@ -580,66 +580,6 @@ startLayoutBuffer('Data Klien - Logics Software');
     </div>
 </div>
 
-<style>
-/* Hide sidebar on mobile */
-@media (max-width: 767.98px) {
-    .sidebar {
-        display: none !important;
-    }
-}
-
-/* Custom styles for better UX */
-.table th {
-    border-top: none;
-    font-weight: 600;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-.badge {
-    font-size: 0.75rem;
-}
-
-.pagination {
-    margin-top: 1rem;
-}
-
-.card {
-    border: none;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-}
-
-.card-header {
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-}
-
-.alert {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.modal-content {
-    border: none;
-    border-radius: 0.5rem;
-}
-
-.modal-header {
-    border-bottom: 1px solid #dee2e6;
-}
-
-.modal-footer {
-    border-top: 1px solid #dee2e6;
-}
-</style>
 
 <script>
 // Format number input with thousand separators
@@ -762,7 +702,7 @@ function handlePekerjaanChange(selectElement, isEditForm = false) {
     // Handle status logic
     if (statusSelect) {
         if (selectElement.value === 'selesai') {
-            statusSelect.value = 'nonaktif';
+            statusSelect.value = 'non aktif';
             statusSelect.disabled = true;
             statusSelect.style.backgroundColor = '#f8f9fa';
         } else {

@@ -14,15 +14,32 @@ if($_POST) {
     $username = $_POST['username'];
     $password = $_POST['password'];
     
-    if($user->login($username, $password)) {
-        $_SESSION['user_id'] = $user->id;
-        $_SESSION['username'] = $user->username;
-        $_SESSION['nama'] = $user->nama;
-        $_SESSION['role'] = $user->role;
-        $_SESSION['email'] = $user->email;
+    // Check if user exists and get status
+    $stmt = $db->prepare("SELECT id, username, password, nama, alamat, email, foto_profile, role, status, developer, support, tagihan FROM users WHERE username = :username");
+    $stmt->bindParam(':username', $username);
+    $stmt->execute();
+    
+    if($stmt->rowCount() > 0) {
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        header('Location: dashboard.php');
-        exit();
+        // Check if user is active
+        if($row['status'] !== 'aktif') {
+            $error_message = 'User sudah tidak aktif!';
+        } else {
+            // Check password
+            if(password_verify($password, $row['password'])) {
+                $_SESSION['user_id'] = $row['id'];
+                $_SESSION['username'] = $row['username'];
+                $_SESSION['nama'] = $row['nama'];
+                $_SESSION['role'] = $row['role'];
+                $_SESSION['email'] = $row['email'];
+                
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                $error_message = 'Username atau password salah!';
+            }
+        }
     } else {
         $error_message = 'Username atau password salah!';
     }
@@ -39,19 +56,11 @@ if($_POST) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f5f5f5;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-    </style>
 </head>
-<body>
+<body class="login-page">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-4">
+            <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-8">
                 <div class="card login-card">
                     <div class="card-header login-header text-center py-4">
                         <div class="d-flex align-items-center justify-content-center mb-0">

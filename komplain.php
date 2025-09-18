@@ -91,7 +91,7 @@ if($_POST) {
     switch($action) {
         case 'create':
             $komplain->subyek = $_POST['subyek'];
-            $komplain->kompain = $_POST['kompain'];
+            $komplain->komplain = $_POST['komplain'];
             // Support user otomatis dari session login
             $komplain->idsupport = $_SESSION['user_id'];
             // Untuk role client, idklien otomatis dari user yang login
@@ -174,7 +174,7 @@ if($_POST) {
         case 'update':
             $komplain->id = $_POST['id'];
             $komplain->subyek = $_POST['subyek'];
-            $komplain->kompain = $_POST['kompain'];
+            $komplain->komplain = $_POST['komplain'];
             // Status tidak bisa diupdate - tetap dari database
             $existing_komplain = new Komplain($db);
             $existing_komplain->getKomplainById($komplain->id);
@@ -616,9 +616,9 @@ startLayoutBuffer('Komplain');
                     </div>
                     
                     <div class="mb-3">
-                        <label for="kompain" class="form-label">Komplain <span class="text-danger">*</span></label>
-                        <div id="kompain" class="ql-editor"></div>
-                        <textarea name="kompain" style="display: none;"></textarea>
+                        <label for="komplain" class="form-label">Komplain <span class="text-danger">*</span></label>
+                        <div id="komplain" class="ql-editor"></div>
+                        <textarea name="komplain" style="display: none;"></textarea>
                     </div>
                     
                     <div class="row">
@@ -678,9 +678,9 @@ startLayoutBuffer('Komplain');
                     </div>
                     
                     <div class="mb-3">
-                        <label for="edit_kompain" class="form-label">Komplain <span class="text-danger">*</span></label>
-                        <div id="edit_kompain" class="ql-editor"></div>
-                        <textarea name="kompain" style="display: none;"></textarea>
+                        <label for="edit_komplain" class="form-label">Komplain <span class="text-danger">*</span></label>
+                        <div id="edit_komplain" class="ql-editor"></div>
+                        <textarea name="komplain" style="display: none;"></textarea>
                     </div>
                     
                     <div class="row">
@@ -746,7 +746,7 @@ startLayoutBuffer('Komplain');
                 </div>
                 <div class="mb-3">
                     <h6>Komplain:</h6>
-                    <div id="view_kompain" class="border p-3 rounded"></div>
+                    <div id="view_komplain" class="border p-3 rounded"></div>
                 </div>
                 <div class="row">
                     <div class="col-md-6">
@@ -976,7 +976,7 @@ startLayoutBuffer('Komplain');
 
 <script>
 // Global variables for Quill editors
-let kompainQuill, editKompainQuill;
+let komplainQuill, editKomplainQuill;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Quill editors
@@ -999,13 +999,13 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     // Initialize create form Quill
-    if (document.getElementById('kompain')) {
-        kompainQuill = new Quill('#kompain', quillConfig);
+    if (document.getElementById('komplain')) {
+        komplainQuill = new Quill('#komplain', quillConfig);
     }
     
     // Initialize edit form Quill
-    if (document.getElementById('edit_kompain')) {
-        editKompainQuill = new Quill('#edit_kompain', quillConfig);
+    if (document.getElementById('edit_komplain')) {
+        editKomplainQuill = new Quill('#edit_komplain', quillConfig);
     }
     
     // Initialize tooltips for process status
@@ -1022,16 +1022,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const addForm = document.querySelector('#addKomplainModal form');
     if (addForm) {
         addForm.addEventListener('submit', function(e) {
-            const kompainTextarea = addForm.querySelector('textarea[name="kompain"]');
-            kompainTextarea.value = kompainQuill.root.innerHTML;
+            const komplainTextarea = addForm.querySelector('textarea[name="komplain"]');
+            komplainTextarea.value = komplainQuill.root.innerHTML;
         });
     }
     
     const editForm = document.querySelector('#editKomplainModal form');
     if (editForm) {
         editForm.addEventListener('submit', function(e) {
-            const kompainTextarea = editForm.querySelector('textarea[name="kompain"]');
-            kompainTextarea.value = editKompainQuill.root.innerHTML;
+            const komplainTextarea = editForm.querySelector('textarea[name="komplain"]');
+            komplainTextarea.value = editKomplainQuill.root.innerHTML;
         });
     }
     
@@ -1102,14 +1102,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reset form when modal is hidden
     document.getElementById('addKomplainModal').addEventListener('hidden.bs.modal', function() {
         document.getElementById('addKomplainModal').querySelector('form').reset();
-        if (kompainQuill) {
-            kompainQuill.setContents([]);
+        if (komplainQuill) {
+            komplainQuill.setContents([]);
         }
     });
     
     document.getElementById('editKomplainModal').addEventListener('hidden.bs.modal', function() {
-        if (editKompainQuill) {
-            editKompainQuill.setContents([]);
+        if (editKomplainQuill) {
+            editKomplainQuill.setContents([]);
         }
     });
 });
@@ -1142,14 +1142,14 @@ function editKomplain(komplain) {
         }
         
         // Set Quill content
-        if (editKompainQuill) {
-            editKompainQuill.root.innerHTML = komplain.kompain;
+        if (editKomplainQuill) {
+            editKomplainQuill.root.innerHTML = komplain.komplain;
         } else {
             // Try to initialize Quill if not already done
-            const editKompainElement = document.getElementById('edit_kompain');
-            if (editKompainElement) {
+            const editKomplainElement = document.getElementById('edit_komplain');
+            if (editKomplainElement) {
                 try {
-                    editKompainQuill = new Quill('#edit_kompain', {
+                    editKomplainQuill = new Quill('#edit_komplain', {
                         theme: 'snow',
                         modules: {
                             toolbar: [
@@ -1165,7 +1165,7 @@ function editKomplain(komplain) {
                         },
                         placeholder: 'Ketik komplain Anda di sini...'
                     });
-                    editKompainQuill.root.innerHTML = komplain.kompain;
+                    editKomplainQuill.root.innerHTML = komplain.komplain;
                 } catch (quillError) {
                     // Silent error handling
                 }
@@ -1198,7 +1198,7 @@ function viewKomplain(komplain) {
     document.getElementById('view_klien').textContent = komplain.nama_klien || '-';
     document.getElementById('view_created_at').textContent = new Date(komplain.created_at).toLocaleString('id-ID');
     document.getElementById('view_updated_at').textContent = new Date(komplain.updated_at).toLocaleString('id-ID');
-    document.getElementById('view_kompain').innerHTML = komplain.kompain;
+    document.getElementById('view_komplain').innerHTML = komplain.komplain;
     
     // Display images with zoom functionality
     const imagesContainer = document.getElementById('view_images');

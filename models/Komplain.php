@@ -7,7 +7,7 @@ class Komplain {
 
     public $id;
     public $subyek;
-    public $kompain;
+    public $komplain;
     public $idsupport;
     public $idklien;
     public $image;
@@ -40,7 +40,7 @@ class Komplain {
         $params = [];
         
         if (!empty($search)) {
-            $where_conditions[] = "(k.subyek LIKE :search OR k.kompain LIKE :search OR u.nama LIKE :search OR kl.namaklien LIKE :search)";
+            $where_conditions[] = "(k.subyek LIKE :search OR k.komplain LIKE :search OR u.nama LIKE :search OR kl.namaklien LIKE :search)";
             $params[':search'] = '%' . $search . '%';
         }
         
@@ -89,7 +89,7 @@ class Komplain {
         $params = [];
         
         if (!empty($search)) {
-            $where_conditions[] = "(k.subyek LIKE :search OR k.kompain LIKE :search OR u.nama LIKE :search OR kl.namaklien LIKE :search)";
+            $where_conditions[] = "(k.subyek LIKE :search OR k.komplain LIKE :search OR u.nama LIKE :search OR kl.namaklien LIKE :search)";
             $params[':search'] = '%' . $search . '%';
         }
         
@@ -132,7 +132,7 @@ class Komplain {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $this->id = $row['id'];
             $this->subyek = $row['subyek'];
-            $this->kompain = $row['kompain'];
+            $this->komplain = $row['komplain'];
             $this->idsupport = $row['idsupport'];
             $this->idklien = $row['idklien'];
             $this->image = $row['image'];
@@ -149,7 +149,7 @@ class Komplain {
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
                   SET subyek = :subyek, 
-                      kompain = :kompain, 
+                      komplain = :komplain, 
                       idsupport = :idsupport, 
                       idklien = :idklien, 
                       image = :image, 
@@ -159,7 +159,7 @@ class Komplain {
         $stmt = $this->conn->prepare($query);
         
         $stmt->bindParam(':subyek', $this->subyek);
-        $stmt->bindParam(':kompain', $this->kompain);
+        $stmt->bindParam(':komplain', $this->komplain);
         $stmt->bindParam(':idsupport', $this->idsupport);
         $stmt->bindParam(':idklien', $this->idklien);
         $stmt->bindParam(':image', $this->image);
@@ -177,7 +177,7 @@ class Komplain {
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
                   SET subyek = :subyek, 
-                      kompain = :kompain, 
+                      komplain = :komplain, 
                       idsupport = :idsupport, 
                       idklien = :idklien, 
                       image = :image, 
@@ -188,7 +188,7 @@ class Komplain {
         $stmt = $this->conn->prepare($query);
         
         $stmt->bindParam(':subyek', $this->subyek);
-        $stmt->bindParam(':kompain', $this->kompain);
+        $stmt->bindParam(':komplain', $this->komplain);
         $stmt->bindParam(':idsupport', $this->idsupport);
         $stmt->bindParam(':idklien', $this->idklien);
         $stmt->bindParam(':image', $this->image);

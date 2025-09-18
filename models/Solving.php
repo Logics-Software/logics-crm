@@ -29,7 +29,7 @@ class Solving {
                          k.subyek as komplain_subyek,
                          k.status as komplain_status,
                          k.created_at as komplain_created_at,
-                         k.kompain as komplain_text,
+                         k.komplain as komplain_text,
                          u.nama as support_name,
                          kl.namaklien as client_name,
                          ud.nama as developer_name

@@ -13,6 +13,7 @@ class Solving {
     public $image;
     public $uploadfiles;
     public $iddeveloper;
+    public $status;
     public $created_at;
     public $updated_at;
 
@@ -144,7 +145,7 @@ class Solving {
         $query = "INSERT INTO " . $this->table_name . " 
                   SET subyek=:subyek, solving=:solving, idkomplain=:idkomplain, 
                       idsupport=:idsupport, image=:image, uploadfiles=:uploadfiles,
-                      iddeveloper=:iddeveloper";
+                      iddeveloper=:iddeveloper, status=:status";
         
         $stmt = $this->conn->prepare($query);
         
@@ -155,6 +156,7 @@ class Solving {
         $stmt->bindValue(':image', $this->image);
         $stmt->bindValue(':uploadfiles', $this->uploadfiles);
         $stmt->bindValue(':iddeveloper', $this->iddeveloper);
+        $stmt->bindValue(':status', $this->status);
         
         if ($stmt->execute()) {
             return true;
@@ -167,7 +169,7 @@ class Solving {
         $query = "UPDATE " . $this->table_name . " 
                   SET subyek=:subyek, solving=:solving, idkomplain=:idkomplain, 
                       idsupport=:idsupport, image=:image, uploadfiles=:uploadfiles,
-                      iddeveloper=:iddeveloper
+                      iddeveloper=:iddeveloper, status=:status
                   WHERE id=:id";
         
         $stmt = $this->conn->prepare($query);
@@ -179,6 +181,7 @@ class Solving {
         $stmt->bindValue(':image', $this->image);
         $stmt->bindValue(':uploadfiles', $this->uploadfiles);
         $stmt->bindValue(':iddeveloper', $this->iddeveloper);
+        $stmt->bindValue(':status', $this->status);
         $stmt->bindValue(':id', $this->id);
         
         if ($stmt->execute()) {
@@ -251,6 +254,79 @@ class Solving {
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Update status solving
+    public function updateStatus() {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET status = :status, updated_at = NOW()
+                  WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':status', $this->status);
+        $stmt->bindValue(':id', $this->id);
+        
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+    
+    // Update status solving with notes
+    public function updateStatusWithNotes($notes = '') {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET status = :status, updated_at = NOW()
+                  WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':status', $this->status);
+        $stmt->bindValue(':id', $this->id);
+        
+        if ($stmt->execute()) {
+            // Update komplain status to 'selesai' when solving status is updated to 'update'
+            if ($this->status === 'update') {
+                $this->updateKomplainStatus();
+            }
+            
+            // Log the status update with notes if provided
+            if (!empty($notes)) {
+                $this->logStatusUpdate($notes);
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    // Update komplain status to 'selesai'
+    private function updateKomplainStatus() {
+        // Get the komplain_id from current solving record
+        $query = "SELECT idkomplain FROM " . $this->table_name . " WHERE id = :id";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':id', $this->id);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($result && $result['idkomplain']) {
+            // Update komplain status to 'selesai'
+            $update_query = "UPDATE komplain SET status = 'selesai', updated_at = NOW() WHERE id = :komplain_id";
+            $update_stmt = $this->conn->prepare($update_query);
+            $update_stmt->bindValue(':komplain_id', $result['idkomplain']);
+            $update_stmt->execute();
+        }
+    }
+    
+    // Log status update with notes
+    private function logStatusUpdate($notes) {
+        $query = "INSERT INTO solving_status_log (solving_id, status, notes, updated_by, updated_at) 
+                  VALUES (:solving_id, :status, :notes, :updated_by, NOW())";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':solving_id', $this->id);
+        $stmt->bindValue(':status', $this->status);
+        $stmt->bindValue(':notes', $notes);
+        $stmt->bindValue(':updated_by', $_SESSION['user_id']);
+        
+        $stmt->execute();
     }
 }
 ?>

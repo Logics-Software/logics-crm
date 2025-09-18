@@ -834,7 +834,6 @@ startLayoutBuffer('Komplain');
             </div>
             <div class="modal-body">
                 <p>Apakah Anda yakin ingin memproses komplain "<span id="process_subyek"></span>"?</p>
-                <p class="text-info">Status komplain akan berubah dari "komplain" menjadi "proses".</p>
                 <div class="mb-3">
                     <label for="process_notes" class="form-label">Catatan (Opsional)</label>
                     <textarea class="form-control" id="process_notes" name="notes" rows="3" placeholder="Tambahkan catatan untuk proses komplain..."></textarea>

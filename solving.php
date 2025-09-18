@@ -76,6 +76,7 @@ if($_POST) {
             $solving->idkomplain = $_POST['idkomplain'];
             $solving->idsupport = $_POST['idsupport'];
             $solving->iddeveloper = $_SESSION['user_id'];
+            $solving->status = 'posting'; // Default status untuk create
             
             // Handle image uploads
             $images = [];
@@ -161,6 +162,7 @@ if($_POST) {
             $solving->idkomplain = $_POST['idkomplain'];
             $solving->idsupport = $_POST['idsupport'];
             $solving->iddeveloper = $_SESSION['user_id'];
+            $solving->status = 'update'; // Status update untuk update
             
             // Handle image uploads
             $images = [];
@@ -251,6 +253,21 @@ if($_POST) {
                 $message_type = 'danger';
             }
             break;
+            
+        case 'update_status':
+            $solving->id = $_POST['id'];
+            $solving->status = 'update';
+            $notes = isset($_POST['notes']) ? trim($_POST['notes']) : '';
+            
+            if($solving->updateStatusWithNotes($notes)) {
+                // Redirect untuk mencegah resubmission
+                header('Location: solving.php?success=update_status');
+                exit();
+            } else {
+                $message = 'Gagal mengupdate status solving!';
+                $message_type = 'danger';
+            }
+            break;
     }
 }
 
@@ -267,6 +284,10 @@ if (isset($_GET['success'])) {
             break;
         case 'delete':
             $message = 'Solving berhasil dihapus!';
+            $message_type = 'success';
+            break;
+        case 'update_status':
+            $message = 'Status solving berhasil diupdate!';
             $message_type = 'success';
             break;
     }
@@ -343,6 +364,7 @@ ob_start();
                             <th><a href="<?php echo getSortUrl('komplain_subyek', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Komplain <?php echo $sort_by == 'komplain_subyek' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
                             <th><a href="<?php echo getSortUrl('support_name', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Support <?php echo $sort_by == 'support_name' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
                             <th><a href="<?php echo getSortUrl('client_name', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Client <?php echo $sort_by == 'client_name' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
+                            <th><a href="<?php echo getSortUrl('status', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Status <?php echo $sort_by == 'status' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
                             <th><a href="<?php echo getSortUrl('created_at', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Tanggal <?php echo $sort_by == 'created_at' ? ($sort_order == 'ASC' ? '↑' : '↓') : ''; ?></a></th>
                             <th>Aksi</th>
                         </tr>
@@ -350,7 +372,7 @@ ob_start();
                     <tbody>
                         <?php if($solving_data->rowCount() == 0): ?>
                             <tr>
-                                <td colspan="7" class="text-center">Tidak ada data solving</td>
+                                <td colspan="8" class="text-center">Tidak ada data solving</td>
                             </tr>
                         <?php else: ?>
                             <?php 
@@ -358,35 +380,56 @@ ob_start();
                             while($s = $solving_data->fetch(PDO::FETCH_ASSOC)): ?>
                                 <tr>
                                     <td><?php echo $counter++; ?></td>
-                                    <td><?php echo htmlspecialchars($s['subyek']); ?></td>
+                                    <td class="small text-primary"><?php echo htmlspecialchars($s['subyek']); ?></td>
                                     <td>
                                         <?php if(!empty($s['komplain_subyek'])): ?>
-                                            <span><?php echo htmlspecialchars($s['komplain_subyek']); ?></span>
+                                            <span class="small"><?php echo htmlspecialchars($s['komplain_subyek']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if(!empty($s['support_name'])): ?>
-                                            <span><?php echo htmlspecialchars($s['support_name']); ?></span>
+                                            <span class="small"><?php echo htmlspecialchars($s['support_name']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
                                         <?php if(!empty($s['client_name'])): ?>
-                                            <span><?php echo htmlspecialchars($s['client_name']); ?></span>
+                                            <span class="small"><?php echo htmlspecialchars($s['client_name']); ?></span>
                                         <?php else: ?>
                                             <span class="text-muted">-</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo date('d/m/Y H:i', strtotime($s['created_at'])); ?></td>
+                                    <td>
+                                        <?php 
+                                        $status = $s['status'] ?? 'posting';
+                                        $badge_class = '';
+                                        switch($status) {
+                                            case 'posting':
+                                                $badge_class = 'bg-warning';
+                                                $status_text = 'Posting';
+                                                break;
+                                            case 'update':
+                                                $badge_class = 'bg-info';
+                                                $status_text = 'Update';
+                                                break;
+                                            default:
+                                                $badge_class = 'bg-secondary';
+                                                $status_text = ucfirst($status);
+                                                break;
+                                        }
+                                        ?>
+                                        <span class="badge <?php echo $badge_class; ?>"><?php echo $status_text; ?></span>
+                                    </td>
+                                    <td class="small"><?php echo date('d/m/Y', strtotime($s['created_at'])); ?></td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-outline-info view-btn" 
                                                 data-solving='<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <?php if ($current_user->role !== 'support' && $current_user->support != 1): ?>
+                                        <?php if (($current_user->role !== 'support' && $current_user->support != 1) || ($current_user->developer == 1 && $s['status'] == 'posting')): ?>
                                         <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
                                                 data-solving='<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-edit"></i>
@@ -395,6 +438,14 @@ ob_start();
                                                 data-id="<?php echo $s['id']; ?>" 
                                                 data-subyek="<?php echo htmlspecialchars($s['subyek']); ?>">
                                             <i class="fas fa-trash"></i>
+                                        </button>
+                                        <?php endif; ?>
+                                        <?php if (($current_user->role === 'support' || $current_user->support == 1) && $current_user->developer != 1 && $s['status'] == 'posting'): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-success update-status-btn" 
+                                                data-id="<?php echo $s['id']; ?>" 
+                                                data-subyek="<?php echo htmlspecialchars($s['subyek']); ?>"
+                                                title="Proses Update Selesai">
+                                            <i class="fas fa-check"></i>
                                         </button>
                                         <?php endif; ?>
                                     </td>
@@ -614,6 +665,34 @@ ob_start();
     </div>
 </div>
 
+<!-- Update Status Confirmation Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Konfirmasi Proses Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin sudah melakukan update terhadap komplain "<span id="update_status_subyek"></span> tersebut?</p>
+                <div class="mb-3">
+                    <label for="update_status_notes" class="form-label">Catatan (Opsional)</label>
+                    <textarea class="form-control" id="update_status_notes" name="notes" rows="3" placeholder="Tambahkan catatan update komplain..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form method="POST" class="form-inline">
+                    <input type="hidden" name="action" value="update_status">
+                    <input type="hidden" name="id" id="update_status_id">
+                    <input type="hidden" name="notes" id="update_status_notes_hidden">
+                    <button type="submit" class="btn btn-success">Update Selesai</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Komplain Detail Modal -->
 <div class="modal fade" id="komplainDetailModal" tabindex="-1" aria-labelledby="komplainDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -797,6 +876,29 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('delete_subyek').textContent = this.dataset.subyek;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         });
+    });
+    
+    // Update status button click
+    document.querySelectorAll('.update-status-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('update_status_id').value = this.dataset.id;
+            document.getElementById('update_status_subyek').textContent = this.dataset.subyek;
+            // Clear notes field when opening modal
+            document.getElementById('update_status_notes').value = '';
+            new bootstrap.Modal(document.getElementById('updateStatusModal')).show();
+        });
+    });
+    
+    // Handle update status form submission
+    document.getElementById('updateStatusModal').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get notes from textarea
+        const notes = document.getElementById('update_status_notes').value;
+        document.getElementById('update_status_notes_hidden').value = notes;
+        
+        // Submit the form
+        this.querySelector('form').submit();
     });
     
     // Reset form when modal is hidden

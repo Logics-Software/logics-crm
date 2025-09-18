@@ -59,9 +59,20 @@ function getSortUrl($field, $current_sort, $current_order, $search, $limit) {
     return 'solving.php?' . http_build_query($params);
 }
 
-// Get solving data
-$solving_data = $solving->getSolvingWithPagination($page, $limit, $search, $sort_by, $sort_order);
-$total_solving = $solving->getTotalSolving($search);
+// Get solving data based on user role and job
+if ($current_user->role === 'admin' && $current_user->developer == 1) {
+    // Admin with developer job can see all solving data
+    $solving_data = $solving->getSolvingWithPagination($page, $limit, $search, $sort_by, $sort_order);
+    $total_solving = $solving->getTotalSolving($search);
+} elseif ($current_user->role === 'support' || $current_user->support == 1) {
+    // Support users can only see their own solving data
+    $solving_data = $solving->getSolvingBySupportUser($_SESSION['user_id'], $page, $limit, $search, $sort_by, $sort_order);
+    $total_solving = $solving->getTotalSolvingBySupportUser($_SESSION['user_id'], $search);
+} else {
+    // Other users see all data (fallback)
+    $solving_data = $solving->getSolvingWithPagination($page, $limit, $search, $sort_by, $sort_order);
+    $total_solving = $solving->getTotalSolving($search);
+}
 
 $total_pages = ceil($total_solving / $limit);
 
@@ -370,14 +381,80 @@ ob_start();
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if($solving_data->rowCount() == 0): ?>
+                        <?php if(($current_user->role === 'support' || $current_user->support == 1) ? empty($solving_data) : $solving_data->rowCount() == 0): ?>
                             <tr>
                                 <td colspan="8" class="text-center">Tidak ada data solving</td>
                             </tr>
                         <?php else: ?>
                             <?php 
                             $counter = ($page - 1) * $limit + 1;
-                            while($s = $solving_data->fetch(PDO::FETCH_ASSOC)): ?>
+                            if ($current_user->role === 'support' || $current_user->support == 1) {
+                                // For support users, $solving_data is an array
+                                foreach($solving_data as $s): ?>
+                                    <tr>
+                                        <td><?php echo $counter++; ?></td>
+                                        <td class="small text-primary"><?php echo htmlspecialchars($s['subyek']); ?></td>
+                                        <td>
+                                            <?php if(!empty($s['komplain_subyek'])): ?>
+                                                <span class="small"><?php echo htmlspecialchars($s['komplain_subyek']); ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if(!empty($s['support_name'])): ?>
+                                                <span class="small"><?php echo htmlspecialchars($s['support_name']); ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if(!empty($s['client_name'])): ?>
+                                                <span class="small"><?php echo htmlspecialchars($s['client_name']); ?></span>
+                                            <?php else: ?>
+                                                <span class="text-muted">-</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php
+                                            $status_text = '';
+                                            $badge_class = '';
+                                            switch($s['status']) {
+                                                case 'posting':
+                                                    $status_text = 'Posting';
+                                                    $badge_class = 'bg-warning';
+                                                    break;
+                                                case 'update':
+                                                    $status_text = 'Update';
+                                                    $badge_class = 'bg-success';
+                                                    break;
+                                                default:
+                                                    $status_text = ucfirst($s['status']);
+                                                    $badge_class = 'bg-secondary';
+                                            }
+                                            ?>
+                                            <span class="badge <?php echo $badge_class; ?>"><?php echo $status_text; ?></span>
+                                        </td>
+                                        <td class="small"><?php echo date('d/m/Y', strtotime($s['created_at'])); ?></td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-info view-btn" 
+                                                    data-solving='<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'
+                                                    title="Lihat Detail">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <?php if (($current_user->role === 'support' || $current_user->support == 1) && $current_user->developer != 1 && $s['status'] == 'posting'): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-success update-status-btn" 
+                                                    data-id="<?php echo $s['id']; ?>" 
+                                                    data-subyek="<?php echo htmlspecialchars($s['subyek']); ?>"
+                                                    title="Proses Update Selesai">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php } else { ?>
+                                <?php while($s = $solving_data->fetch(PDO::FETCH_ASSOC)): ?>
                                 <tr>
                                     <td><?php echo $counter++; ?></td>
                                     <td class="small text-primary"><?php echo htmlspecialchars($s['subyek']); ?></td>
@@ -450,7 +527,8 @@ ob_start();
                                         <?php endif; ?>
                                     </td>
                                 </tr>
-                            <?php endwhile; ?>
+                                <?php endwhile; ?>
+                            <?php } ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -925,7 +1003,12 @@ function viewSolving(solving) {
             </div>
             <div class="col-md-6">
                 <h6>Komplain:</h6>
-                <p onclick="showKomplainModal('${solving.komplain_subyek || 'N/A'}', '${solving.komplain_status || 'N/A'}', '${solving.komplain_created_at ? new Date(solving.komplain_created_at).toLocaleString('id-ID') : 'N/A'}', '${solving.client_name || 'N/A'}', '${solving.komplain_text || 'N/A'}')" 
+                <p class="komplain-link" 
+                   data-subyek="${solving.komplain_subyek || 'N/A'}"
+                   data-status="${solving.komplain_status || 'N/A'}"
+                   data-tanggal="${solving.komplain_created_at ? new Date(solving.komplain_created_at).toLocaleString('id-ID') : 'N/A'}"
+                   data-client="${solving.client_name || 'N/A'}"
+                   data-text="${solving.komplain_text || 'N/A'}"
                    style="cursor: pointer; text-decoration: underline; color: #007bff;">
                     ${solving.komplain_subyek || '-'}
                 </p>
@@ -954,7 +1037,7 @@ function viewSolving(solving) {
         <div class="row">
             <div class="col-md-6">
                 <h6>Tanggal Dibuat/Update:</h6>
-                <p>${new Date(solving.created_at).toLocaleString('id-ID')} || ${new Date(solving.updated_at).toLocaleString('id-ID')}</p>
+                <p>${new Date(solving.created_at).toLocaleString('id-ID')} / ${new Date(solving.updated_at).toLocaleString('id-ID')}</p>
             </div>
         </div>
         <div class="row">
@@ -1049,6 +1132,19 @@ function viewSolving(solving) {
     }
     
     document.getElementById('view_solving_content').innerHTML = content;
+    
+    // Add event listener for komplain links
+    document.querySelectorAll('.komplain-link').forEach(link => {
+        link.addEventListener('click', function() {
+            const subyek = this.dataset.subyek;
+            const status = this.dataset.status;
+            const tanggal = this.dataset.tanggal;
+            const client = this.dataset.client;
+            const text = this.dataset.text;
+            showKomplainModal(subyek, status, tanggal, client, text);
+        });
+    });
+    
     new bootstrap.Modal(document.getElementById('viewSolvingModal')).show();
 }
 

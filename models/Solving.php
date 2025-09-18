@@ -106,6 +106,77 @@ class Solving {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
+    
+    // Get solving by support user
+    public function getSolvingBySupportUser($user_id, $page = 1, $limit = 10, $search = '', $sort_by = 'created_at', $sort_order = 'DESC') {
+        $offset = ($page - 1) * $limit;
+        
+        $query = "SELECT s.*, 
+                         k.subyek as komplain_subyek,
+                         k.status as komplain_status,
+                         u.nama as support_name,
+                         kl.namaklien as client_name
+                  FROM " . $this->table_name . " s 
+                  LEFT JOIN komplain k ON s.idkomplain = k.id 
+                  LEFT JOIN users u ON s.idsupport = u.id 
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  WHERE s.idsupport = :user_id";
+        
+        $where_conditions = [];
+        $params = [':user_id' => $user_id];
+        
+        if (!empty($search)) {
+            $where_conditions[] = "(s.subyek LIKE :search OR s.solving LIKE :search OR k.subyek LIKE :search OR u.nama LIKE :search OR kl.namaklien LIKE :search)";
+            $params[':search'] = '%' . $search . '%';
+        }
+        
+        if (!empty($where_conditions)) {
+            $query .= " AND " . implode(' AND ', $where_conditions);
+        }
+        
+        $query .= " ORDER BY s.$sort_by $sort_order LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Get total solving by support user
+    public function getTotalSolvingBySupportUser($user_id, $search = '') {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " s 
+                  LEFT JOIN komplain k ON s.idkomplain = k.id 
+                  LEFT JOIN users u ON s.idsupport = u.id 
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  WHERE s.idsupport = :user_id";
+        
+        $where_conditions = [];
+        $params = [':user_id' => $user_id];
+        
+        if (!empty($search)) {
+            $where_conditions[] = "(s.subyek LIKE :search OR s.solving LIKE :search OR k.subyek LIKE :search OR u.nama LIKE :search OR kl.namaklien LIKE :search)";
+            $params[':search'] = '%' . $search . '%';
+        }
+        
+        if (!empty($where_conditions)) {
+            $query .= " AND " . implode(' AND ', $where_conditions);
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'];
+    }
 
     // Get solving by ID
     public function getSolvingById($id) {

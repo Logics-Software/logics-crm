@@ -249,12 +249,31 @@ if($_POST) {
             
         case 'delete':
             $komplain->id = $_POST['id'];
-            if($komplain->delete()) {
-                // Redirect untuk mencegah resubmission
-                header('Location: komplain.php?success=delete');
-                exit();
+            
+            // Validasi: hanya admin atau pemilik komplain yang bisa menghapus
+            $existing_komplain = new Komplain($db);
+            $existing_komplain->getKomplainById($komplain->id);
+            
+            $can_delete = false;
+            if ($current_user->role === 'admin') {
+                $can_delete = true;
+            } elseif (($current_user->role === 'support' || $current_user->support == 1) && $existing_komplain->idsupport == $_SESSION['user_id']) {
+                $can_delete = true;
+            } elseif ($current_user->role === 'client' && $existing_komplain->idklien == $_SESSION['user_id']) {
+                $can_delete = true;
+            }
+            
+            if ($can_delete) {
+                if($komplain->delete()) {
+                    // Redirect untuk mencegah resubmission
+                    header('Location: komplain.php?success=delete');
+                    exit();
+                } else {
+                    $message = 'Gagal menghapus komplain!';
+                    $message_type = 'danger';
+                }
             } else {
-                $message = 'Gagal menghapus komplain!';
+                $message = 'Anda tidak memiliki izin untuk menghapus komplain ini!';
                 $message_type = 'danger';
             }
             break;
@@ -343,7 +362,7 @@ startLayoutBuffer('Komplain');
                         <option value="">Semua Status</option>
                         <option value="komplain" <?php echo $status_filter === 'komplain' ? 'selected' : ''; ?>>Komplain</option>
                         <option value="proses" <?php echo $status_filter === 'proses' ? 'selected' : ''; ?>>Proses</option>
-                        <option value="feedback" <?php echo $status_filter === 'feedback' ? 'selected' : ''; ?>>Feedback</option>
+                        <option value="solved" <?php echo $status_filter === 'solved' ? 'selected' : ''; ?>>Solved</option>
                         <option value="selesai" <?php echo $status_filter === 'selesai' ? 'selected' : ''; ?>>Selesai</option>
                     </select>
                 </div>
@@ -394,9 +413,11 @@ startLayoutBuffer('Komplain');
                                 <td colspan="7" class="text-center">Tidak ada data komplain</td>
                             </tr>
                         <?php else: ?>
-                            <?php while($k = $komplain_data->fetch(PDO::FETCH_ASSOC)): ?>
+                            <?php 
+                            $counter = ($page - 1) * $limit + 1;
+                            while($k = $komplain_data->fetch(PDO::FETCH_ASSOC)): ?>
                                 <tr>
-                                    <td><?php echo ($page - 1) * $limit + $komplain_data->rowCount(); ?></td>
+                                    <td><?php echo $counter++; ?></td>
                                     <td><?php echo htmlspecialchars($k['subyek']); ?></td>
                                     <td>
                                         <?php if(!empty($k['nama_klien'])): ?>
@@ -416,7 +437,7 @@ startLayoutBuffer('Komplain');
                                         <span class="badge bg-<?php 
                                             echo $k['status'] === 'komplain' ? 'warning' : 
                                                 ($k['status'] === 'proses' ? 'info' : 
-                                                    ($k['status'] === 'feedback' ? 'primary' : 'success')); 
+                                                    ($k['status'] === 'solved' ? 'primary' : 'success')); 
                                         ?>">
                                             <?php echo ucfirst($k['status']); ?>
                                         </span>
@@ -433,7 +454,7 @@ startLayoutBuffer('Komplain');
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <?php endif; ?>
-                                        <?php if ($current_user->role === 'admin'): ?>
+                                        <?php if ($current_user->role === 'admin' || (($current_user->role === 'support' || $current_user->support == 1) && $k['idsupport'] == $_SESSION['user_id']) || ($current_user->role === 'client' && $k['idklien'] == $_SESSION['user_id'])): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
                                                 data-id="<?php echo $k['id']; ?>" 
                                                 data-subyek="<?php echo htmlspecialchars($k['subyek']); ?>">
@@ -815,9 +836,11 @@ startLayoutBuffer('Komplain');
 </style>
 
 <script>
+// Global variables for Quill editors
+let kompainQuill, editKompainQuill;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Quill editors
-    let kompainQuill, editKompainQuill;
     
     const quillConfig = {
         theme: 'snow',
@@ -865,9 +888,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Edit button click
     document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const komplain = JSON.parse(this.dataset.komplain);
-            editKomplain(komplain);
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            try {
+                const komplain = JSON.parse(this.dataset.komplain);
+                editKomplain(komplain);
+            } catch (error) {
+                alert('Error loading komplain data: ' + error.message);
+            }
         });
     });
     
@@ -877,6 +905,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const komplain = JSON.parse(this.dataset.komplain);
             viewKomplain(komplain);
         });
+    });
+    
+    // Handle modal focus management for accessibility
+    const modals = ['viewKomplainModal', 'addKomplainModal', 'editKomplainModal', 'imageZoomModal', 'deleteModal'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                // Remove focus from any focused element within the modal
+                const focusedElement = modal.querySelector(':focus');
+                if (focusedElement) {
+                    focusedElement.blur();
+                }
+            });
+        }
     });
     
     // Delete button click
@@ -904,19 +947,69 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function editKomplain(komplain) {
-    document.getElementById('edit_id').value = komplain.id;
-    document.getElementById('edit_subyek').value = komplain.subyek;
-    // Status tidak bisa diupdate - tidak perlu set value
-    document.getElementById('edit_idsupport').value = komplain.idsupport || '';
-    document.getElementById('edit_idklien').value = komplain.idklien || '';
-    
-    // Set Quill content
-    if (editKompainQuill) {
-        editKompainQuill.root.innerHTML = komplain.kompain;
+    try {
+        // Check if all required elements exist
+        const editIdField = document.getElementById('edit_id');
+        const editSubyekField = document.getElementById('edit_subyek');
+        const editIdsupportField = document.getElementById('edit_idsupport');
+        const editIdklienField = document.getElementById('edit_idklien');
+        const modalElement = document.getElementById('editKomplainModal');
+        
+        if (!editIdField || !editSubyekField || !editIdsupportField || !editIdklienField || !modalElement) {
+            alert('Required form elements not found. Please refresh the page.');
+            return;
+        }
+        
+        // Populate form fields
+        editIdField.value = komplain.id;
+        editSubyekField.value = komplain.subyek;
+        editIdsupportField.value = komplain.idsupport || '';
+        editIdklienField.value = komplain.idklien || '';
+        
+        // Set Quill content
+        if (editKompainQuill) {
+            editKompainQuill.root.innerHTML = komplain.kompain;
+        } else {
+            // Try to initialize Quill if not already done
+            const editKompainElement = document.getElementById('edit_kompain');
+            if (editKompainElement) {
+                try {
+                    editKompainQuill = new Quill('#edit_kompain', {
+                        theme: 'snow',
+                        modules: {
+                            toolbar: [
+                                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                                ['bold', 'italic', 'underline', 'strike'],
+                                [{ 'color': [] }, { 'background': [] }],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                                [{ 'align': [] }],
+                                ['link', 'image', 'video'],
+                                ['clean']
+                            ]
+                        },
+                        placeholder: 'Ketik komplain Anda di sini...'
+                    });
+                    editKompainQuill.root.innerHTML = komplain.kompain;
+                } catch (quillError) {
+                    // Silent error handling
+                }
+            }
+        }
+        
+        // Check if Bootstrap is loaded
+        if (typeof bootstrap === 'undefined') {
+            alert('Bootstrap is not loaded. Please refresh the page.');
+            return;
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+    } catch (error) {
+        alert('Error opening edit modal: ' + error.message);
     }
-    
-    const modal = new bootstrap.Modal(document.getElementById('editKomplainModal'));
-    modal.show();
 }
 
 function viewKomplain(komplain) {
@@ -924,7 +1017,7 @@ function viewKomplain(komplain) {
     document.getElementById('view_status').innerHTML = '<span class="badge bg-' + 
         (komplain.status === 'komplain' ? 'warning' : 
          komplain.status === 'proses' ? 'info' : 
-         komplain.status === 'feedback' ? 'primary' : 'success') + '">' + 
+         komplain.status === 'solved' ? 'primary' : 'success') + '">' + 
         komplain.status.charAt(0).toUpperCase() + komplain.status.slice(1) + '</span>';
     document.getElementById('view_support').textContent = komplain.nama_support || '-';
     document.getElementById('view_klien').textContent = komplain.nama_klien || '-';

@@ -60,13 +60,62 @@ $current_user->getUserById($_SESSION['user_id']);
                                 $database = new Database();
                                 $db = $database->getConnection();
                                 
+                                // Get komplain count
                                 $stmt = $db->prepare("SELECT COUNT(*) as total FROM komplain WHERE status = 'komplain'");
                                 $stmt->execute();
                                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
                                 $komplain_count = $result['total'];
                                 
-                                if ($komplain_count > 0): ?>
+                                // Get komplain data for popup (5 terakhir)
+                                $stmt = $db->prepare("
+                                    SELECT k.id, k.subyek, k.created_at, 
+                                           u.nama as support_name, 
+                                           kl.namaklien as client_name
+                                    FROM komplain k 
+                                    LEFT JOIN users u ON k.idsupport = u.id 
+                                    LEFT JOIN klien kl ON k.idklien = kl.id 
+                                    WHERE k.status = 'komplain' 
+                                    ORDER BY k.created_at DESC 
+                                    LIMIT 5
+                                ");
+                                $stmt->execute();
+                                $komplain_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                
+                                if ($komplain_count > 0): 
+                                    // Build popup content
+                                    $popup_content = '<div class="komplain-popup">';
+                                    $popup_content .= '<div class="popup-header">';
+                                    $popup_content .= '</div>';
+                                    $popup_content .= '<div class="popup-body">';
+                                    
+                                    foreach($komplain_data as $komplain) {
+                                        $popup_content .= '<div class="komplain-item mb-2" onclick="window.location.href=\'komplain.php\'">';
+                                        $popup_content .= '<div class="komplain-subject fw-bold">' . htmlspecialchars($komplain['subyek']) . '</div>';
+                                        $popup_content .= '<div class="komplain-meta text-muted small">';
+                                        $popup_content .= '<i class="fas fa-user"></i> ' . htmlspecialchars($komplain['client_name'] ?? 'N/A');
+                                        $popup_content .= '<span class="ms-2"><i class="fas fa-clock"></i> ' . date('d/m/Y H:i', strtotime($komplain['created_at'])) . '</span>';
+                                        $popup_content .= '</div>';
+                                        $popup_content .= '</div>';
+                                    }
+                                    
+                                    if($komplain_count > 5) {
+                                        $popup_content .= '<div class="text-center mt-2">';
+                                        $popup_content .= '<small class="text-muted">dan ' . ($komplain_count - 5) . ' komplain lainnya...</small>';
+                                        $popup_content .= '</div>';
+                                    }
+                                    
+                                    $popup_content .= '</div>';
+                                    $popup_content .= '<div class="popup-footer">';
+                                    $popup_content .= '<a href="komplain.php" class="btn btn-sm btn-primary w-100">Lihat Semua Komplain</a>';
+                                    $popup_content .= '</div>';
+                                    $popup_content .= '</div>';
+                                ?>
                                     <a href="komplain.php" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger komplain-badge text-decoration-none" style="margin-left: -10px !important; margin-top: 5px !important;"
+                                       id="komplainBadge" 
+                                       data-bs-toggle="popover" 
+                                       data-bs-placement="bottom" 
+                                       data-bs-html="true"
+                                       data-bs-content="<?php echo htmlspecialchars($popup_content, ENT_QUOTES); ?>"
                                        title="<?php echo $komplain_count; ?> komplain menunggu">
                                         <?php echo $komplain_count > 99 ? '99+' : $komplain_count; ?>
                                     </a>
@@ -190,10 +239,90 @@ $current_user->getUserById($_SESSION['user_id']);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <!-- Komplain Badge Popover Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize popover for komplain badge
+            const komplainBadge = document.getElementById('komplainBadge');
+            if (komplainBadge) {
+                const popover = new bootstrap.Popover(komplainBadge, {
+                    trigger: 'manual',
+                    placement: 'bottom',
+                    html: true,
+                    container: 'body'
+                });
+                
+                let hoverTimeout;
+                
+                // Show popover on hover
+                komplainBadge.addEventListener('mouseenter', function() {
+                    clearTimeout(hoverTimeout);
+                    popover.show();
+                });
+                
+                // Hide popover with delay when leaving badge
+                komplainBadge.addEventListener('mouseleave', function() {
+                    hoverTimeout = setTimeout(function() {
+                        popover.hide();
+                    }, 200);
+                });
+                
+                // Keep popover open when hovering over it
+                document.addEventListener('mouseover', function(e) {
+                    if (e.target && e.target.closest && e.target.closest('.popover')) {
+                        clearTimeout(hoverTimeout);
+                    }
+                });
+                
+                // Hide popover when leaving popover area
+                document.addEventListener('mouseleave', function(e) {
+                    if (e.target && e.target.closest && e.target.closest('.popover')) {
+                        hoverTimeout = setTimeout(function() {
+                            popover.hide();
+                        }, 50);
+                    }
+                });
+                
+                // Use MutationObserver to detect when popover is added to DOM
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1 && node.classList && node.classList.contains('popover')) {
+                                // Add event listeners to the popover element
+                                node.addEventListener('mouseleave', function() {
+                                    hoverTimeout = setTimeout(function() {
+                                        popover.hide();
+                                    }, 50);
+                                });
+                                
+                                node.addEventListener('mouseenter', function() {
+                                    clearTimeout(hoverTimeout);
+                                });
+                            }
+                        });
+                    });
+                });
+                
+                // Start observing
+                observer.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                // Handle click on komplain items
+                document.addEventListener('click', function(e) {
+                    if (e.target && e.target.closest && e.target.closest('.komplain-item')) {
+                        window.location.href = 'komplain.php';
+                    }
+                });
+            }
+        });
+    </script>
+    
     <!-- Mobile Bottom Navigation Script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Add touch feedback for mobile bottom navigation
+            // Add touch solved for mobile bottom navigation
             const bottomNavItems = document.querySelectorAll('.bottom-nav-item');
             
             bottomNavItems.forEach(item => {

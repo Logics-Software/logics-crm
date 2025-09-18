@@ -90,7 +90,7 @@ ob_start();
                         </button>
                         <a href="daftar_klien.php" class="btn btn-secondary">
                             <i class="fas fa-refresh"></i> Reset
-                        </a>
+                        </a>    
                     </div>
                 </div>
             </form>

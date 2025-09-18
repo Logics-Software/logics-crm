@@ -32,6 +32,7 @@ if($_POST) {
                 $_SESSION['username'] = $row['username'];
                 $_SESSION['nama'] = $row['nama'];
                 $_SESSION['role'] = $row['role'];
+                $_SESSION['idklien'] = $row['idklien'];
                 $_SESSION['developer'] = $row['developer'];
                 $_SESSION['support'] = $row['support'];
                 $_SESSION['tagihan'] = $row['tagihan'];

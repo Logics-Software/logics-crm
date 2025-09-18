@@ -245,7 +245,7 @@ class Komplain {
     }
 
     // Get komplain by user role and job
-    public function getKomplainByUser($user_id, $user_role, $page = 1, $limit = 10, $user_support = false) {
+    public function getKomplainByUser($user_id, $user_role, $page = 1, $limit = 10, $user_support = false, $user_idklien = null) {
         $offset = ($page - 1) * $limit;
         
         $query = "SELECT k.*, 
@@ -263,14 +263,16 @@ class Komplain {
         if ($user_role === 'support' || $user_support) {
             $query .= " WHERE k.idsupport = :user_id";
         } elseif ($user_role === 'client') {
-            $query .= " WHERE k.idklien = :user_id";
+            $query .= " WHERE k.idsupport = :user_id";
         }
         
         $query .= " ORDER BY k.created_at DESC LIMIT :limit OFFSET :offset";
         
         $stmt = $this->conn->prepare($query);
         
-        if ($user_role === 'support' || $user_support || $user_role === 'client') {
+        if ($user_role === 'support' || $user_support) {
+            $stmt->bindParam(':user_id', $user_id);
+        } elseif ($user_role === 'client') {
             $stmt->bindParam(':user_id', $user_id);
         }
         
@@ -279,6 +281,140 @@ class Komplain {
         $stmt->execute();
         
         return $stmt;
+    }
+
+    // Get komplain by support user (based on iduser in klien table)
+    public function getKomplainBySupportUser($user_id, $page = 1, $limit = 10, $search = '', $status_filter = '', $sort_by = 'created_at', $sort_order = 'DESC') {
+        $offset = ($page - 1) * $limit;
+        
+        $query = "SELECT k.*, 
+                         u.nama as nama_support, 
+                         kl.namaklien as nama_klien,
+                         kp.notes as process_notes,
+                         kp.process_date,
+                         up.nama as process_user_name
+                  FROM " . $this->table_name . " k 
+                  LEFT JOIN users u ON k.idsupport = u.id 
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  LEFT JOIN komplain_process kp ON k.id = kp.komplain_id AND kp.status_to = 'proses'
+                  LEFT JOIN users up ON kp.user_id = up.id
+                  WHERE kl.iduser = :user_id";
+        
+        // Add search filter
+        if (!empty($search)) {
+            $query .= " AND (k.subyek LIKE :search OR kl.namaklien LIKE :search OR u.nama LIKE :search)";
+        }
+        
+        // Add status filter
+        if (!empty($status_filter)) {
+            $query .= " AND k.status = :status_filter";
+        }
+        
+        // Add sorting
+        $query .= " ORDER BY k." . $sort_by . " " . $sort_order . " LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $user_id);
+        
+        if (!empty($search)) {
+            $search_param = '%' . $search . '%';
+            $stmt->bindParam(':search', $search_param);
+        }
+        
+        if (!empty($status_filter)) {
+            $stmt->bindParam(':status_filter', $status_filter);
+        }
+        
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt;
+    }
+
+    // Get total komplain by support user
+    public function getTotalKomplainBySupportUser($user_id, $search = '', $status_filter = '') {
+        $query = "SELECT COUNT(*) as total 
+                  FROM " . $this->table_name . " k 
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  WHERE kl.iduser = :user_id";
+        
+        // Add search filter
+        if (!empty($search)) {
+            $query .= " AND (k.subyek LIKE :search OR kl.namaklien LIKE :search)";
+        }
+        
+        // Add status filter
+        if (!empty($status_filter)) {
+            $query .= " AND k.status = :status_filter";
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':user_id', $user_id);
+        
+        if (!empty($search)) {
+            $search_param = '%' . $search . '%';
+            $stmt->bindParam(':search', $search_param);
+        }
+        
+        if (!empty($status_filter)) {
+            $stmt->bindParam(':status_filter', $status_filter);
+        }
+        
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
+    }
+
+    // Get total komplain by user with search and status filter
+    public function getTotalKomplainByUser($user_id, $user_role, $user_support = false, $user_idklien = null, $search = '', $status_filter = '') {
+        $query = "SELECT COUNT(*) as total 
+                  FROM " . $this->table_name . " k 
+                  LEFT JOIN users u ON k.idsupport = u.id 
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  LEFT JOIN komplain_process kp ON k.id = kp.komplain_id AND kp.status_to = 'proses'
+                  LEFT JOIN users up ON kp.user_id = up.id";
+        
+        if ($user_role === 'support' || $user_support) {
+            $query .= " WHERE k.idsupport = :user_id";
+        } elseif ($user_role === 'client') {
+            $query .= " WHERE k.idsupport = :user_id";
+        } else {
+            $query .= " WHERE k.idsupport = :user_id";
+        }
+        
+        // Add search filter
+        if (!empty($search)) {
+            $query .= " AND (k.subyek LIKE :search OR kl.namaklien LIKE :search OR u.nama LIKE :search)";
+        }
+        
+        // Add status filter
+        if (!empty($status_filter)) {
+            $query .= " AND k.status = :status_filter";
+        }
+        
+        $stmt = $this->conn->prepare($query);
+        
+        if ($user_role === 'support' || $user_support) {
+            $stmt->bindParam(':user_id', $user_id);
+        } elseif ($user_role === 'client') {
+            $stmt->bindParam(':user_id', $user_id);
+        } else {
+            $stmt->bindParam(':user_id', $user_id);
+        }
+        
+        if (!empty($search)) {
+            $search_param = '%' . $search . '%';
+            $stmt->bindParam(':search', $search_param);
+        }
+        
+        if (!empty($status_filter)) {
+            $stmt->bindParam(':status_filter', $status_filter);
+        }
+        
+        $stmt->execute();
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row['total'];
     }
 }
 ?>

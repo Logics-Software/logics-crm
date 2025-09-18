@@ -51,12 +51,22 @@ if (!in_array($sort_order, ['ASC', 'DESC'])) {
 if($page < 1) $page = 1;
 
 // Get komplain data based on user role and job
-if ($current_user->role === 'admin') {
+if ($current_user->role === 'admin' && $current_user->developer == 1) {
+    // 1. Administrator + Developer: semua data komplain
     $komplain_data = $komplain->getKomplainWithPagination($page, $limit, $search, $status_filter, $sort_by, $sort_order);
     $total_komplain = $komplain->getTotalKomplain($search, $status_filter);
+} elseif ($current_user->role === 'client') {
+    // 2. Client: hanya data komplain yang dibuat oleh user login
+    $komplain_data = $komplain->getKomplainByUser($_SESSION['user_id'], $current_user->role, $page, $limit, $current_user->support, $current_user->idklien);
+    $total_komplain = $komplain->getTotalKomplainByUser($_SESSION['user_id'], $current_user->role, $current_user->support, $current_user->idklien, $search, $status_filter);
+} elseif ($current_user->role === 'user' && $current_user->support == 1) {
+    // 3. User + Support: data komplain yang dibuat oleh support + data komplain dari client yang iduser di klien == iduser login
+    $komplain_data = $komplain->getKomplainBySupportUser($_SESSION['user_id'], $page, $limit, $search, $status_filter, $sort_by, $sort_order);
+    $total_komplain = $komplain->getTotalKomplainBySupportUser($_SESSION['user_id'], $search, $status_filter);
 } else {
-    $komplain_data = $komplain->getKomplainByUser($_SESSION['user_id'], $current_user->role, $page, $limit, $current_user->support);
-    $total_komplain = $komplain->getTotalKomplain($search, $status_filter);
+    // Default: data komplain berdasarkan user
+    $komplain_data = $komplain->getKomplainByUser($_SESSION['user_id'], $current_user->role, $page, $limit, $current_user->support, $current_user->idklien);
+    $total_komplain = $komplain->getTotalKomplainByUser($_SESSION['user_id'], $current_user->role, $current_user->support, $current_user->idklien, $search, $status_filter);
 }
 
 $total_pages = ceil($total_komplain / $limit);
@@ -84,7 +94,12 @@ if($_POST) {
             $komplain->kompain = $_POST['kompain'];
             // Support user otomatis dari session login
             $komplain->idsupport = $_SESSION['user_id'];
-            $komplain->idklien = $_POST['idklien'];
+            // Untuk role client, idklien otomatis dari user yang login
+            if ($current_user->role === 'client') {
+                $komplain->idklien = $current_user->idklien;
+            } else {
+                $komplain->idklien = $_POST['idklien'];
+            }
             // Status otomatis "komplain"
             $komplain->status = 'komplain';
             
@@ -160,12 +175,17 @@ if($_POST) {
             $komplain->id = $_POST['id'];
             $komplain->subyek = $_POST['subyek'];
             $komplain->kompain = $_POST['kompain'];
-            $komplain->idsupport = $_POST['idsupport'];
-            $komplain->idklien = $_POST['idklien'];
             // Status tidak bisa diupdate - tetap dari database
             $existing_komplain = new Komplain($db);
             $existing_komplain->getKomplainById($komplain->id);
             $komplain->status = $existing_komplain->status;
+            $komplain->idsupport = $existing_komplain->idsupport; // Tetap menggunakan idsupport yang sudah ada
+            // Untuk role client, idklien otomatis dari user yang login
+            if ($current_user->role === 'client') {
+                $komplain->idklien = $current_user->idklien;
+            } else {
+                $komplain->idklien = $_POST['idklien'];
+            }
             
             // Handle image uploads
             $images = [];
@@ -354,6 +374,17 @@ if ($current_user->role === 'admin') {
     $stmt = $db->prepare("SELECT id, nama FROM users WHERE (role = 'support' OR support = 1) AND status = 'aktif' ORDER BY nama ASC");
     $stmt->execute();
     $support_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get client data for the logged-in client user
+    if ($current_user->idklien) {
+        $stmt = $db->prepare("SELECT id, namaklien FROM klien WHERE id = :idklien AND status = 'aktif'");
+        $stmt->bindParam(':idklien', $current_user->idklien);
+        $stmt->execute();
+        $clients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        // If no idklien, initialize empty array
+        $clients = [];
+    }
 }
 
 // Start layout
@@ -494,7 +525,7 @@ startLayoutBuffer('Komplain');
                                                 data-komplain='<?php echo json_encode($k, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <?php if ($current_user->role === 'admin' || (($current_user->role === 'support' || $current_user->support == 1) && $k['idsupport'] == $_SESSION['user_id']) || ($current_user->role === 'client' && $k['idklien'] == $_SESSION['user_id'])): ?>
+                                        <?php if (($current_user->role === 'admin' || (($current_user->role === 'support' || $current_user->support == 1) && $k['idsupport'] == $_SESSION['user_id']) || ($current_user->role === 'client' && $k['idsupport'] == $_SESSION['user_id'])) && !in_array($k['status'], ['proses', 'solved', 'selesai']) && ($current_user->role !== 'admin' || $current_user->developer != 1)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
                                                 data-komplain='<?php echo json_encode($k, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-edit"></i>
@@ -507,7 +538,7 @@ startLayoutBuffer('Komplain');
                                             <i class="fas fa-cog"></i> Proses
                                         </button>
                                         <?php endif; ?>
-                                        <?php if ($current_user->role === 'admin' || (($current_user->role === 'support' || $current_user->support == 1) && $k['idsupport'] == $_SESSION['user_id']) || ($current_user->role === 'client' && $k['idklien'] == $_SESSION['user_id'])): ?>
+                                        <?php if (($current_user->role === 'admin' || (($current_user->role === 'support' || $current_user->support == 1) && $k['idsupport'] == $_SESSION['user_id']) || ($current_user->role === 'client' && $k['idsupport'] == $_SESSION['user_id'])) && !in_array($k['status'], ['proses', 'solved', 'selesai']) && ($current_user->role !== 'admin' || $current_user->developer != 1)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
                                                 data-id="<?php echo $k['id']; ?>" 
                                                 data-subyek="<?php echo htmlspecialchars($k['subyek']); ?>">
@@ -570,14 +601,17 @@ startLayoutBuffer('Komplain');
 
                         <div class="col-md-6 mb-3">
                             <label for="idklien" class="form-label">Klien <span class="text-danger">*</span></label>
-                            <select class="form-select" id="idklien" name="idklien" required>
+                            <select class="form-select" id="idklien" name="idklien" required <?php echo ($current_user->role === 'client') ? 'disabled' : ''; ?>>
                                 <option value="">Pilih Klien</option>
                                 <?php foreach($clients as $client): ?>
-                                    <option value="<?php echo $client['id']; ?>">
+                                    <option value="<?php echo $client['id']; ?>" <?php echo ($current_user->role === 'client' && $current_user->idklien == $client['id']) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($client['namaklien']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <?php if($current_user->role === 'client'): ?>
+                                <input type="hidden" name="idklien" value="<?php echo $current_user->idklien; ?>">
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -623,34 +657,23 @@ startLayoutBuffer('Komplain');
                     <input type="hidden" name="id" id="edit_id">
                     
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-6 mb-3">
                             <label for="edit_subyek" class="form-label">Subyek <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="edit_subyek" name="subyek" required>
                         </div>
-                    </div>
-                    
-                    <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="edit_idsupport" class="form-label">Support User</label>
-                            <select class="form-select" id="edit_idsupport" name="idsupport">
-                                <option value="">Pilih Support User</option>
-                                <?php foreach($support_users as $user): ?>
-                                    <option value="<?php echo $user['id']; ?>">
-                                        <?php echo htmlspecialchars($user['nama']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="edit_idklien" class="form-label">Klien</label>
-                            <select class="form-select" id="edit_idklien" name="idklien">
+                            <label for="edit_idklien" class="form-label">Klien <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_idklien" name="idklien" <?php echo ($current_user->role === 'client') ? 'disabled' : 'required'; ?>>
                                 <option value="">Pilih Klien</option>
                                 <?php foreach($clients as $client): ?>
-                                    <option value="<?php echo $client['id']; ?>">
+                                    <option value="<?php echo $client['id']; ?>" <?php echo ($current_user->role === 'client' && $current_user->idklien == $client['id']) ? 'selected' : ''; ?>>
                                         <?php echo htmlspecialchars($client['namaklien']); ?>
                                     </option>
                                 <?php endforeach; ?>
                             </select>
+                            <?php if($current_user->role === 'client'): ?>
+                                <input type="hidden" name="idklien" value="<?php echo $current_user->idklien; ?>">
+                            <?php endif; ?>
                         </div>
                     </div>
                     
@@ -837,6 +860,7 @@ startLayoutBuffer('Komplain');
     max-height: 95vh;
     height: 90vh;
     min-height: 600px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 #imageZoomModal .modal-body {
@@ -1096,11 +1120,10 @@ function editKomplain(komplain) {
         // Check if all required elements exist
         const editIdField = document.getElementById('edit_id');
         const editSubyekField = document.getElementById('edit_subyek');
-        const editIdsupportField = document.getElementById('edit_idsupport');
         const editIdklienField = document.getElementById('edit_idklien');
         const modalElement = document.getElementById('editKomplainModal');
         
-        if (!editIdField || !editSubyekField || !editIdsupportField || !editIdklienField || !modalElement) {
+        if (!editIdField || !editSubyekField || !editIdklienField || !modalElement) {
             alert('Required form elements not found. Please refresh the page.');
             return;
         }
@@ -1108,8 +1131,16 @@ function editKomplain(komplain) {
         // Populate form fields
         editIdField.value = komplain.id;
         editSubyekField.value = komplain.subyek;
-        editIdsupportField.value = komplain.idsupport || '';
         editIdklienField.value = komplain.idklien || '';
+        
+        // Handle disabled idklien field for client role
+        if (editIdklienField.disabled) {
+            // For client role, set the hidden input value
+            const hiddenIdklien = document.querySelector('input[name="idklien"][type="hidden"]');
+            if (hiddenIdklien) {
+                hiddenIdklien.value = komplain.idklien || '';
+            }
+        }
         
         // Set Quill content
         if (editKompainQuill) {

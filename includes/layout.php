@@ -163,24 +163,30 @@ $current_user->getUserById($_SESSION['user_id']);
                         Dashboard
                     </a>
                 </li>
+                <?php if($_SESSION['role'] !== 'user' && $_SESSION['role'] !== 'client'): ?>
                 <li>
                     <a href="klien.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'klien.php' ? 'active' : ''; ?>">
                         <i class="fas fa-users"></i>
                         Data Klien
                     </a>
                 </li>
+                <?php endif; ?>
+                <?php if($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'client'): ?>
                 <li>
                     <a href="daftar_klien.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'daftar_klien.php' ? 'active' : ''; ?>">
                         <i class="fas fa-list"></i>
                         Daftar Klien
                     </a>
                 </li>
+                <?php endif; ?>
+                <?php if($_SESSION['role'] !== 'user' && $_SESSION['role'] !== 'client'): ?>
                 <li>
                     <a href="project.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'project.php' ? 'active' : ''; ?>">
                         <i class="fas fa-project-diagram"></i>
                         Data Project
                     </a>
                 </li>
+                <?php endif; ?>
                 <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1 || $_SESSION['role'] == 'client'): ?>
                 <li>
                     <a href="komplain.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'komplain.php' ? 'active' : ''; ?>">
@@ -229,18 +235,28 @@ $current_user->getUserById($_SESSION['user_id']);
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
             </a>
+            <?php if($_SESSION['role'] !== 'user' && $_SESSION['role'] !== 'client'): ?>
             <a href="klien.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'klien.php' ? 'active' : ''; ?>">
                 <i class="fas fa-users"></i>
                 <span>Klien</span>
             </a>
+            <?php if($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'client'): ?>
             <a href="daftar_klien.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'daftar_klien.php' ? 'active' : ''; ?>">
                 <i class="fas fa-list"></i>
                 <span>Daftar</span>
             </a>
+            <?php endif; ?>
             <a href="project.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'project.php' ? 'active' : ''; ?>">
                 <i class="fas fa-project-diagram"></i>
                 <span>Project</span>
             </a>
+            <?php endif; ?>
+            <?php if($_SESSION['role'] == 'user' && $_SESSION['support'] == 1): ?>
+            <a href="daftar_klien.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'daftar_klien.php' ? 'active' : ''; ?>">
+                <i class="fas fa-list"></i>
+                <span>Daftar</span>
+            </a>
+            <?php endif; ?>
             <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1 || $_SESSION['role'] == 'client'): ?>
             <a href="komplain.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'komplain.php' ? 'active' : ''; ?>">
                 <i class="fas fa-headphones"></i>
@@ -259,14 +275,24 @@ $current_user->getUserById($_SESSION['user_id']);
                 <span>Users</span>
             </a>
             <?php endif; ?>
-            <a href="profile.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'profile.php' ? 'active' : ''; ?>">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
         </div>
     </nav>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-hide Success Messages Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-hide success messages after 5 seconds
+            const successAlerts = document.querySelectorAll('.alert-success');
+            successAlerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000); // 5 seconds
+            });
+        });
+    </script>
     
     <!-- Komplain Badge Popover Script -->
     <script>

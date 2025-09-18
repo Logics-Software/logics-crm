@@ -1,6 +1,7 @@
 <?php
 require_once 'config/database.php';
 require_once 'models/User.php';
+require_once 'models/Klien.php';
 require_once 'includes/session.php';
 require_once 'includes/layout_helper.php';
 
@@ -9,6 +10,7 @@ requireAdmin(); // Hanya admin yang bisa akses
 $database = new Database();
 $db = $database->getConnection();
 $user = new User($db);
+$klien = new Klien($db);
 
 // Get pagination and sorting parameters
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -94,6 +96,7 @@ if($_POST) {
                 $user->developer = isset($_POST['developer']) ? 1 : 0;
                 $user->support = isset($_POST['support']) ? 1 : 0;
                 $user->tagihan = isset($_POST['tagihan']) ? 1 : 0;
+                $user->idklien = !empty($_POST['idklien']) ? $_POST['idklien'] : null;
                 $user->foto_profile = '';
                 
                 // Check if username already exists
@@ -165,6 +168,7 @@ if($_POST) {
                 $user->developer = isset($_POST['developer']) ? 1 : 0;
                 $user->support = isset($_POST['support']) ? 1 : 0;
                 $user->tagihan = isset($_POST['tagihan']) ? 1 : 0;
+                $user->idklien = !empty($_POST['idklien']) ? $_POST['idklien'] : null;
                 
                 // Check if trying to deactivate admin user
                 $existing_user = new User($db);
@@ -277,16 +281,16 @@ if($_POST) {
                     $message_type = 'danger';
                 } else {
                     // Delete photo if exists
-                    if(!empty($existing_user->foto_profile) && file_exists('uploads/profiles/' . $existing_user->foto_profile)) {
-                        unlink('uploads/profiles/' . $existing_user->foto_profile);
-                    }
-                    
-                    if($user->delete()) {
-                        $message = 'User berhasil dihapus!';
-                        $message_type = 'success';
-                    } else {
-                        $message = 'Gagal menghapus user!';
-                        $message_type = 'danger';
+                if(!empty($existing_user->foto_profile) && file_exists('uploads/profiles/' . $existing_user->foto_profile)) {
+                    unlink('uploads/profiles/' . $existing_user->foto_profile);
+                }
+                
+                if($user->delete()) {
+                    $message = 'User berhasil dihapus!';
+                    $message_type = 'success';
+                } else {
+                    $message = 'Gagal menghapus user!';
+                    $message_type = 'danger';
                     }
                 }
                 break;
@@ -367,6 +371,7 @@ startLayoutBuffer('Manajemen User - Logics Software');
                             <th>Email</th>
                             <th><a href="<?php echo getSortUrl('role', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Role <?php echo $sort_by == 'role' ? ($sort_order == 'asc' ? '↑' : '↓') : ''; ?></a></th>
                             <th>Pekerjaan</th>
+                            <th>Klien</th>
                             <th><a href="<?php echo getSortUrl('status', $sort_by, $sort_order, $search, $limit); ?>" class="text-white text-decoration-none">Status <?php echo $sort_by == 'status' ? ($sort_order == 'asc' ? '↑' : '↓') : ''; ?></a></th>
                             <th>Aksi</th>
                         </tr>
@@ -413,6 +418,13 @@ startLayoutBuffer('Manajemen User - Logics Software');
                                                 <span class="text-muted">-</span>
                                             <?php endif; ?>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <?php if($u['role'] === 'client' && !empty($u['namaklien'])): ?>
+                                            <span class="badge bg-primary"><?php echo htmlspecialchars($u['namaklien']); ?></span>
+                                        <?php else: ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <span class="badge bg-<?php echo $u['status'] === 'aktif' ? 'success' : 'danger'; ?>">
@@ -511,7 +523,7 @@ startLayoutBuffer('Manajemen User - Logics Software');
                         <input type="file" class="form-control" id="foto_profile" name="foto_profile" accept="image/*">
                         <small class="text-muted d-block mb-2">Format: JPG, PNG, GIF, WebP. Maksimal 2MB.</small>
                     </div>
-
+                    
                     <div class="row">
                         <div class="col-md-2 mb-3">
                             <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
@@ -523,7 +535,21 @@ startLayoutBuffer('Manajemen User - Logics Software');
                             </select>
                         </div>
 
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3" id="klien-field" style="display: none;">
+                            <label for="idklien" class="form-label">Klien <span class="text-danger">*</span></label>
+                            <select class="form-select" id="idklien" name="idklien">
+                                <option value="">Pilih Klien</option>
+                                <?php
+                                // Get all klien for dropdown
+                                $klien_stmt = $klien->getAllKlien();
+                                while($k = $klien_stmt->fetch(PDO::FETCH_ASSOC)) {
+                                    echo '<option value="' . $k['id'] . '">' . htmlspecialchars($k['namaklien']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3" id="pekerjaan-field">
                             <label class="form-label">Pekerjaan</label>
                             <div class="row">
                                 <div class="col-md-4">
@@ -563,7 +589,7 @@ startLayoutBuffer('Manajemen User - Logics Software');
                         </div>
                         
                     </div>
-                                        
+                    
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
@@ -635,7 +661,21 @@ startLayoutBuffer('Manajemen User - Logics Software');
                                 <option value="client">Client</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+
+                        <div class="col-md-6 mb-3" id="edit_klien-field" style="display: none;">
+                            <label for="edit_idklien" class="form-label">Klien <span class="text-danger">*</span></label>
+                            <select class="form-select" id="edit_idklien" name="idklien">
+                                <option value="">Pilih Klien</option>
+                                <?php
+                                // Get all klien for dropdown
+                                $klien_stmt = $klien->getAllKlien();
+                                while($k = $klien_stmt->fetch(PDO::FETCH_ASSOC)) {
+                                    echo '<option value="' . $k['id'] . '">' . htmlspecialchars($k['namaklien']) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="edit_pekerjaan-field">
                             <label class="form-label">Pekerjaan</label>
                             <div class="row">
                                 <div class="col-md-4">
@@ -839,6 +879,22 @@ function toggleJobCheckboxes(formType) {
         }
         
         if (selectedRole === 'client') {
+            // Show klien field for client role
+            const klienField = document.getElementById(prefix + 'klien-field');
+            if (klienField) {
+                klienField.style.display = 'block';
+                const klienSelect = document.getElementById(prefix + 'idklien');
+                if (klienSelect) {
+                    klienSelect.required = true;
+                }
+            }
+            
+            // Hide pekerjaan field for client role
+            const pekerjaanField = document.getElementById(prefix + 'pekerjaan-field');
+            if (pekerjaanField) {
+                pekerjaanField.style.display = 'none';
+            }
+            
             // Disable and uncheck all job checkboxes for client role
             developerCheckbox.disabled = true;
             developerCheckbox.checked = false;
@@ -855,6 +911,23 @@ function toggleJobCheckboxes(formType) {
             // infoDiv.innerHTML = '<i class="fas fa-info-circle me-1"></i>Role Client tidak memiliki akses pekerjaan internal. Checkbox dinonaktifkan.';
             // jobContainer.appendChild(infoDiv);
         } else {
+            // Hide klien field for non-client roles
+            const klienField = document.getElementById(prefix + 'klien-field');
+            if (klienField) {
+                klienField.style.display = 'none';
+                const klienSelect = document.getElementById(prefix + 'idklien');
+                if (klienSelect) {
+                    klienSelect.required = false;
+                    klienSelect.value = '';
+                }
+            }
+            
+            // Show pekerjaan field for non-client roles
+            const pekerjaanField = document.getElementById(prefix + 'pekerjaan-field');
+            if (pekerjaanField) {
+                pekerjaanField.style.display = 'block';
+            }
+            
             // Enable all job checkboxes for admin and user roles
             developerCheckbox.disabled = false;
             supportCheckbox.disabled = false;
@@ -872,6 +945,11 @@ function editUser(user) {
         document.getElementById('edit_alamat').value = user.alamat;
         document.getElementById('edit_role').value = user.role;
         document.getElementById('edit_status').value = user.status;
+        
+        // Set klien value if exists
+        if (user.idklien) {
+            document.getElementById('edit_idklien').value = user.idklien;
+        }
         
         // Hide "Non Aktif" option for admin users
         const nonaktifOption = document.getElementById('edit_nonaktif_option');

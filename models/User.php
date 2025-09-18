@@ -17,6 +17,7 @@ class User {
     public $developer;
     public $support;
     public $tagihan;
+    public $idklien;
 
     public function __construct($db) {
         $this->conn = $db;
@@ -24,7 +25,7 @@ class User {
 
     // Login user
     public function login($username, $password) {
-        $query = "SELECT id, username, password, nama, alamat, email, foto_profile, role, status, developer, support, tagihan 
+        $query = "SELECT id, username, password, nama, alamat, email, foto_profile, role, status, developer, support, tagihan, idklien 
                   FROM " . $this->table_name . " 
                   WHERE username = :username AND status = 'aktif'";
         
@@ -54,9 +55,10 @@ class User {
 
     // Get all users
     public function getAllUsers() {
-        $query = "SELECT id, username, nama, alamat, email, foto_profile, role, status, developer, support, tagihan, created_at 
-                  FROM " . $this->table_name . " 
-                  ORDER BY created_at DESC";
+        $query = "SELECT u.id, u.username, u.nama, u.alamat, u.email, u.foto_profile, u.role, u.status, u.developer, u.support, u.tagihan, u.idklien, u.created_at, k.namaklien 
+                  FROM " . $this->table_name . " u 
+                  LEFT JOIN klien k ON u.idklien = k.id 
+                  ORDER BY u.created_at DESC";
         
         $stmt = $this->conn->prepare($query);
         $stmt->execute();
@@ -88,8 +90,9 @@ class User {
             $sort_order = 'asc';
         }
         
-        $query = "SELECT id, username, nama, alamat, email, foto_profile, role, status, developer, support, tagihan, created_at 
-                  FROM " . $this->table_name . " 
+        $query = "SELECT u.id, u.username, u.nama, u.alamat, u.email, u.foto_profile, u.role, u.status, u.developer, u.support, u.tagihan, u.idklien, u.created_at, k.namaklien 
+                  FROM " . $this->table_name . " u 
+                  LEFT JOIN klien k ON u.idklien = k.id 
                   " . $where_clause . "
                   ORDER BY " . $sort_by . " " . $sort_order . "
                   LIMIT :limit OFFSET :offset";
@@ -135,9 +138,10 @@ class User {
 
     // Get user by ID
     public function getUserById($id) {
-        $query = "SELECT id, username, nama, alamat, email, foto_profile, role, status, developer, support, tagihan 
-                  FROM " . $this->table_name . " 
-                  WHERE id = :id";
+        $query = "SELECT u.id, u.username, u.nama, u.alamat, u.email, u.foto_profile, u.role, u.status, u.developer, u.support, u.tagihan, u.idklien, k.namaklien 
+                  FROM " . $this->table_name . " u 
+                  LEFT JOIN klien k ON u.idklien = k.id 
+                  WHERE u.id = :id";
         
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
@@ -156,6 +160,7 @@ class User {
             $this->developer = (bool)$row['developer'];
             $this->support = (bool)$row['support'];
             $this->tagihan = (bool)$row['tagihan'];
+            $this->idklien = $row['idklien'];
             return true;
         }
         return false;
@@ -164,8 +169,8 @@ class User {
     // Create user
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
-                  (username, password, nama, alamat, email, foto_profile, role, status, developer, support, tagihan) 
-                  VALUES (:username, :password, :nama, :alamat, :email, :foto_profile, :role, :status, :developer, :support, :tagihan)";
+                  (username, password, nama, alamat, email, foto_profile, role, status, developer, support, tagihan, idklien) 
+                  VALUES (:username, :password, :nama, :alamat, :email, :foto_profile, :role, :status, :developer, :support, :tagihan, :idklien)";
         
         $stmt = $this->conn->prepare($query);
         
@@ -182,6 +187,7 @@ class User {
         $stmt->bindParam(':developer', $this->developer, PDO::PARAM_BOOL);
         $stmt->bindParam(':support', $this->support, PDO::PARAM_BOOL);
         $stmt->bindParam(':tagihan', $this->tagihan, PDO::PARAM_BOOL);
+        $stmt->bindParam(':idklien', $this->idklien);
         
         if($stmt->execute()) {
             return true;
@@ -194,7 +200,7 @@ class User {
         $query = "UPDATE " . $this->table_name . " 
                   SET username = :username, nama = :nama, alamat = :alamat, 
                       email = :email, foto_profile = :foto_profile, role = :role, status = :status,
-                      developer = :developer, support = :support, tagihan = :tagihan";
+                      developer = :developer, support = :support, tagihan = :tagihan, idklien = :idklien";
         
         if(!empty($this->password)) {
             $query .= ", password = :password";
@@ -214,6 +220,7 @@ class User {
         $stmt->bindParam(':developer', $this->developer, PDO::PARAM_BOOL);
         $stmt->bindParam(':support', $this->support, PDO::PARAM_BOOL);
         $stmt->bindParam(':tagihan', $this->tagihan, PDO::PARAM_BOOL);
+        $stmt->bindParam(':idklien', $this->idklien);
         $stmt->bindParam(':id', $this->id);
         
         if(!empty($this->password)) {

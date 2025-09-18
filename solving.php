@@ -1056,6 +1056,42 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<style>
+/* Image Zoom Modal Styles */
+#imageZoomModal .modal-dialog {
+    max-width: 95vw;
+    max-height: 95vh;
+    height: 90vh;
+    min-height: 600px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#imageZoomModal .modal-body {
+    padding: 1rem;
+    background-color: #f8f9fa;
+}
+
+.image-zoom-container {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    height: 70vh;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#zoomedImage {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+</style>
+
 <?php
 // Get the buffered content
 $content = ob_get_clean();

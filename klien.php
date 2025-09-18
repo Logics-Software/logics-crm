@@ -224,7 +224,7 @@ startLayoutBuffer('Data Klien - Logics Software');
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-search"></i> Cari
                         </button>
-                        <a href="klien.php" class="btn btn-secondary">
+                        <a href="solving.php" class="btn btn-secondary">
                             <i class="fas fa-refresh"></i> Reset
                         </a>
                     </div>

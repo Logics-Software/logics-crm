@@ -363,7 +363,7 @@ startLayoutBuffer('Komplain');
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Data Komplain</h1>
-        <?php if ($current_user->role === 'admin' || $current_user->role === 'support' || $current_user->support == 1 || $current_user->role === 'client'): ?>
+        <?php if ($current_user->role === 'admin' || $current_user->role === 'support' || $current_user->support == 1 || $current_user->developer == 1 || $current_user->role === 'client'): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addKomplainModal">
             <i class="fas fa-plus"></i> Tambah Komplain
         </button>

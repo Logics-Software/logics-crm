@@ -1,6 +1,11 @@
 <?php
-// Get database connection from global
-$db = $GLOBALS['db'];
+// Include required files
+require_once 'config/database.php';
+require_once 'models/User.php';
+
+// Get database connection
+$database = new Database();
+$db = $database->getConnection();
 
 // Get current user info for photo
 $current_user = new User($db);
@@ -165,6 +170,12 @@ $current_user->getUserById($_SESSION['user_id']);
                     </a>
                 </li>
                 <li>
+                    <a href="daftar_klien.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'daftar_klien.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-list"></i>
+                        Daftar Klien
+                    </a>
+                </li>
+                <li>
                     <a href="project.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'project.php' ? 'active' : ''; ?>">
                         <i class="fas fa-project-diagram"></i>
                         Data Project
@@ -173,8 +184,16 @@ $current_user->getUserById($_SESSION['user_id']);
                 <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1 || $_SESSION['role'] == 'client'): ?>
                 <li>
                     <a href="komplain.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'komplain.php' ? 'active' : ''; ?>">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fa-solid fa-headphones"></i>
                         Komplain
+                    </a>
+                </li>
+                <?php endif; ?>
+                <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1): ?>
+                <li>
+                    <a href="solving.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'solving.php' ? 'active' : ''; ?>">
+                        <i class="fas fa-tools"></i>
+                        Solving
                     </a>
                 </li>
                 <?php endif; ?>
@@ -200,7 +219,7 @@ $current_user->getUserById($_SESSION['user_id']);
         <?php endif; ?>
         
         <!-- Page content will be inserted here -->
-        <?php echo $content; ?>
+        <?php echo isset($content) ? $content : ''; ?>
     </main>
 
     <!-- Mobile Bottom Navigation -->
@@ -214,14 +233,24 @@ $current_user->getUserById($_SESSION['user_id']);
                 <i class="fas fa-users"></i>
                 <span>Klien</span>
             </a>
+            <a href="daftar_klien.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'daftar_klien.php' ? 'active' : ''; ?>">
+                <i class="fas fa-list"></i>
+                <span>Daftar</span>
+            </a>
             <a href="project.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'project.php' ? 'active' : ''; ?>">
                 <i class="fas fa-project-diagram"></i>
                 <span>Project</span>
             </a>
             <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1 || $_SESSION['role'] == 'client'): ?>
             <a href="komplain.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'komplain.php' ? 'active' : ''; ?>">
-                <i class="fas fa-exclamation-triangle"></i>
+                <i class="fas fa-headphones"></i>
                 <span>Komplain</span>
+            </a>
+            <?php endif; ?>
+            <?php if($_SESSION['role'] == 'admin' || $_SESSION['role'] == 'support' || $_SESSION['support'] == 1): ?>
+            <a href="solving.php" class="bottom-nav-item <?php echo basename($_SERVER['PHP_SELF']) == 'solving.php' ? 'active' : ''; ?>">
+                <i class="fas fa-tools"></i>
+                <span>Solving</span>
             </a>
             <?php endif; ?>
             <?php if($_SESSION['role'] == 'admin'): ?>

@@ -315,7 +315,7 @@ ob_start();
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 mb-0">Data Solving</h1>
-        <?php if ($current_user->role === 'admin' || $current_user->role === 'support' || $current_user->support == 1 || $current_user->developer == 1): ?>
+        <?php if (($current_user->role === 'admin' || $current_user->developer == 1) || ($current_user->role === 'support' || $current_user->support == 1) && $current_user->developer == 1): ?>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSolvingModal">
             <i class="fas fa-plus"></i> Tambah Solving
         </button>
@@ -450,6 +450,19 @@ ob_start();
                                                 <i class="fas fa-check"></i>
                                             </button>
                                             <?php endif; ?>
+                                            <?php if ($current_user->developer == 1 && $s['status'] == 'posting'): ?>
+                                            <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
+                                                    data-solving='<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'
+                                                    title="Edit Solving">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" 
+                                                    data-id="<?php echo $s['id']; ?>" 
+                                                    data-subyek="<?php echo htmlspecialchars($s['subyek']); ?>"
+                                                    title="Hapus Solving">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            <?php endif; ?>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -506,7 +519,7 @@ ob_start();
                                                 data-solving='<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-eye"></i>
                                         </button>
-                                        <?php if (($current_user->role !== 'support' && $current_user->support != 1) || ($current_user->developer == 1 && $s['status'] == 'posting')): ?>
+                                        <?php if (($current_user->developer == 1 && $s['status'] == 'posting') || ($current_user->role !== 'support' && $current_user->support != 1 && $current_user->developer != 1)): ?>
                                         <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
                                                 data-solving='<?php echo json_encode($s, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-edit"></i>

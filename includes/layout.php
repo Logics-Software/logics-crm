@@ -126,6 +126,70 @@ $current_user->getUserById($_SESSION['user_id']);
                                     </a>
                                 <?php endif;
                             }
+                            
+                            // Show notification badge for support users
+                            if (($current_user->role === 'support' || $current_user->support == 1) && $current_user->developer != 1) {
+                                require_once 'models/Solving.php';
+                                $solving = new Solving($db);
+                                $posting_count = $solving->getPostingSolvingCountBySupportUser($_SESSION['user_id']);
+                                
+                                if ($posting_count > 0): 
+                                    // Get solving data for popup
+                                    $stmt = $db->prepare("
+                                        SELECT s.*, k.subyek as komplain_subyek, k.status as komplain_status, 
+                                               u.nama as support_name, kl.namaklien as client_name
+                                        FROM solving s 
+                                        LEFT JOIN komplain k ON s.idkomplain = k.id 
+                                        LEFT JOIN users u ON s.idsupport = u.id 
+                                        LEFT JOIN klien kl ON k.idklien = kl.id
+                                        WHERE s.idsupport = :user_id AND s.status = 'posting'
+                                        ORDER BY s.created_at DESC 
+                                        LIMIT 5
+                                    ");
+                                    $stmt->bindValue(':user_id', $_SESSION['user_id']);
+                                    $stmt->execute();
+                                    $solving_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                    
+                                    // Build popup content
+                                    $solving_popup_content = '<div class="solving-popup">';
+                                    $solving_popup_content .= '<div class="popup-header">';
+                                    $solving_popup_content .= '<h6><i class="fas fa-tools text-warning"></i> Solving Menunggu DiUpdate</h6>';
+                                    $solving_popup_content .= '</div>';
+                                    $solving_popup_content .= '<div class="popup-body">';
+                                    
+                                    foreach($solving_data as $solving_item) {
+                                        $solving_popup_content .= '<div class="solving-item mb-2" onclick="window.location.href=\'solving.php\'">';
+                                        $solving_popup_content .= '<div class="solving-subject fw-bold">' . htmlspecialchars($solving_item['subyek']) . '</div>';
+                                        $solving_popup_content .= '<div class="solving-meta text-muted small">';
+                                        $solving_popup_content .= '<i class="fas fa-user"></i> ' . htmlspecialchars($solving_item['client_name'] ?? 'N/A');
+                                        $solving_popup_content .= '<span class="ms-2"><i class="fas fa-clock"></i> ' . date('d/m/Y H:i', strtotime($solving_item['created_at'])) . '</span>';
+                                        $solving_popup_content .= '</div>';
+                                        $solving_popup_content .= '</div>';
+                                    }
+                                    
+                                    if($posting_count > 5) {
+                                        $solving_popup_content .= '<div class="text-center mt-2">';
+                                        $solving_popup_content .= '<small class="text-muted">dan ' . ($posting_count - 5) . ' solving lainnya...</small>';
+                                        $solving_popup_content .= '</div>';
+                                    }
+                                    
+                                    $solving_popup_content .= '</div>';
+                                    $solving_popup_content .= '<div class="popup-footer">';
+                                    $solving_popup_content .= '<a href="solving.php" class="btn btn-sm btn-warning w-100">Lihat Semua Solving</a>';
+                                    $solving_popup_content .= '</div>';
+                                    $solving_popup_content .= '</div>';
+                                ?>
+                                    <a href="solving.php" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark solving-badge text-decoration-none" style="margin-left: -10px !important; margin-top: 5px !important;"
+                                       id="solvingBadge" 
+                                       data-bs-toggle="popover" 
+                                       data-bs-placement="bottom" 
+                                       data-bs-html="true"
+                                       data-bs-content="<?php echo htmlspecialchars($solving_popup_content, ENT_QUOTES); ?>"
+                                       title="<?php echo $posting_count; ?> Solving menunggu diupdate">
+                                        <?php echo $posting_count > 99 ? '99+' : $posting_count; ?>
+                                    </a>
+                                <?php endif;
+                            }
                             ?>
                         </div>
                         <span class="user-name"><?php echo htmlspecialchars($current_user->nama ?? 'User'); ?></span>
@@ -368,6 +432,81 @@ $current_user->getUserById($_SESSION['user_id']);
                 document.addEventListener('click', function(e) {
                     if (e.target && e.target.closest && e.target.closest('.komplain-item')) {
                         window.location.href = 'komplain.php';
+                    }
+                });
+            }
+            
+            // Initialize popover for solving badge
+            const solvingBadge = document.getElementById('solvingBadge');
+            if (solvingBadge) {
+                const solvingPopover = new bootstrap.Popover(solvingBadge, {
+                    trigger: 'manual',
+                    placement: 'bottom',
+                    html: true,
+                    container: 'body'
+                });
+                
+                let solvingHoverTimeout;
+                
+                // Show popover on hover
+                solvingBadge.addEventListener('mouseenter', function() {
+                    clearTimeout(solvingHoverTimeout);
+                    solvingPopover.show();
+                });
+                
+                // Hide popover with delay when leaving badge
+                solvingBadge.addEventListener('mouseleave', function() {
+                    solvingHoverTimeout = setTimeout(function() {
+                        solvingPopover.hide();
+                    }, 200);
+                });
+                
+                // Keep popover open when hovering over it
+                document.addEventListener('mouseover', function(e) {
+                    if (e.target && e.target.closest && e.target.closest('.popover')) {
+                        clearTimeout(solvingHoverTimeout);
+                    }
+                });
+                
+                // Hide popover when leaving popover area
+                document.addEventListener('mouseleave', function(e) {
+                    if (e.target && e.target.closest && e.target.closest('.popover')) {
+                        solvingHoverTimeout = setTimeout(function() {
+                            solvingPopover.hide();
+                        }, 50);
+                    }
+                });
+                
+                // Use MutationObserver to detect when popover is added to DOM
+                const solvingObserver = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1 && node.classList && node.classList.contains('popover')) {
+                                // Add event listeners to the popover element
+                                node.addEventListener('mouseleave', function() {
+                                    solvingHoverTimeout = setTimeout(function() {
+                                        solvingPopover.hide();
+                                    }, 50);
+                                });
+                                
+                                node.addEventListener('mouseenter', function() {
+                                    clearTimeout(solvingHoverTimeout);
+                                });
+                            }
+                        });
+                    });
+                });
+                
+                // Start observing
+                solvingObserver.observe(document.body, {
+                    childList: true,
+                    subtree: true
+                });
+                
+                // Handle click on solving items
+                document.addEventListener('click', function(e) {
+                    if (e.target && e.target.closest && e.target.closest('.solving-item')) {
+                        window.location.href = 'solving.php';
                     }
                 });
             }

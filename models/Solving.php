@@ -177,6 +177,18 @@ class Solving {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result['total'];
     }
+    
+    // Get count of posting solving by support user
+    public function getPostingSolvingCountBySupportUser($user_id) {
+        $query = "SELECT COUNT(*) as total FROM " . $this->table_name . " 
+                  WHERE idsupport = :user_id AND status = 'posting'";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindValue(':user_id', $user_id);
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['total'];
+    }
 
     // Get solving by ID
     public function getSolvingById($id) {

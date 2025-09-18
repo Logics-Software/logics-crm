@@ -3,6 +3,7 @@ require_once 'config/database.php';
 require_once 'models/Komplain.php';
 require_once 'models/User.php';
 require_once 'models/Klien.php';
+require_once 'models/KomplainProcess.php';
 require_once 'includes/session.php';
 require_once 'includes/layout_helper.php';
 
@@ -13,6 +14,7 @@ $db = $database->getConnection();
 $komplain = new Komplain($db);
 $user = new User($db);
 $klien = new Klien($db);
+$komplainProcess = new KomplainProcess($db);
 
 $message = '';
 $message_type = '';
@@ -277,6 +279,32 @@ if($_POST) {
                 $message_type = 'danger';
             }
             break;
+            
+        case 'process':
+            $komplain_id = $_POST['komplain_id'];
+            $notes = isset($_POST['notes']) ? trim($_POST['notes']) : '';
+            
+            // Validasi: hanya developer yang bisa memproses komplain
+            if (!$komplainProcess->canProcessKomplain($_SESSION['user_id'])) {
+                $message = 'Anda tidak memiliki izin untuk memproses komplain!';
+                $message_type = 'danger';
+                break;
+            }
+            
+            try {
+                if ($komplainProcess->processKomplain($komplain_id, $_SESSION['user_id'], $notes)) {
+                    // Redirect untuk mencegah resubmission
+                    header('Location: komplain.php?success=process');
+                    exit();
+                } else {
+                    $message = 'Gagal memproses komplain!';
+                    $message_type = 'danger';
+                }
+            } catch (Exception $e) {
+                $message = 'Error: ' . $e->getMessage();
+                $message_type = 'danger';
+            }
+            break;
     }
 }
 
@@ -293,6 +321,10 @@ if (isset($_GET['success'])) {
             break;
         case 'delete':
             $message = 'Komplain berhasil dihapus!';
+            $message_type = 'success';
+            break;
+        case 'process':
+            $message = 'Komplain berhasil diproses!';
             $message_type = 'success';
             break;
     }
@@ -434,6 +466,19 @@ startLayoutBuffer('Komplain');
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <?php if ($k['status'] === 'proses' && !empty($k['process_notes'])): ?>
+                                        <span class="badge bg-info status-badge" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              data-bs-html="true"
+                                              data-bs-title="<div class='process-tooltip'>
+                                                              <div class='fw-bold mb-2'><?php echo htmlspecialchars($k['process_user_name'] ?? 'N/A'); ?></div>
+                                                              <div class='mb-3'><?php echo date('d/m/Y H:i', strtotime($k['process_date'])); ?></div>
+                                                              <div><i class='fa-solid fa-comment'></i><?php echo htmlspecialchars($k['process_notes']); ?></div>
+                                                           </div>">
+                                            <?php echo ucfirst($k['status']); ?>
+                                        </span>
+                                        <?php else: ?>
                                         <span class="badge bg-<?php 
                                             echo $k['status'] === 'komplain' ? 'warning' : 
                                                 ($k['status'] === 'proses' ? 'info' : 
@@ -441,6 +486,7 @@ startLayoutBuffer('Komplain');
                                         ?>">
                                             <?php echo ucfirst($k['status']); ?>
                                         </span>
+                                        <?php endif; ?>
                                     </td>
                                     <td><?php echo date('d/m/Y H:i', strtotime($k['created_at'])); ?></td>
                                     <td>
@@ -452,6 +498,13 @@ startLayoutBuffer('Komplain');
                                         <button type="button" class="btn btn-sm btn-outline-primary edit-btn" 
                                                 data-komplain='<?php echo json_encode($k, JSON_HEX_APOS | JSON_HEX_QUOT); ?>'>
                                             <i class="fas fa-edit"></i>
+                                        </button>
+                                        <?php endif; ?>
+                                        <?php if (($current_user->role === 'admin' || $current_user->developer == 1) && $k['status'] === 'komplain'): ?>
+                                        <button type="button" class="btn btn-sm btn-outline-success process-btn" 
+                                                data-id="<?php echo $k['id']; ?>" 
+                                                data-subyek="<?php echo htmlspecialchars($k['subyek']); ?>">
+                                            <i class="fas fa-cog"></i> Proses
                                         </button>
                                         <?php endif; ?>
                                         <?php if ($current_user->role === 'admin' || (($current_user->role === 'support' || $current_user->support == 1) && $k['idsupport'] == $_SESSION['user_id']) || ($current_user->role === 'client' && $k['idklien'] == $_SESSION['user_id'])): ?>
@@ -748,6 +801,35 @@ startLayoutBuffer('Komplain');
     </div>
 </div>
 
+<!-- Process Confirmation Modal -->
+<div class="modal fade" id="processModal" tabindex="-1" aria-labelledby="processModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="processModalLabel">Konfirmasi Proses Komplain</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin memproses komplain "<span id="process_subyek"></span>"?</p>
+                <p class="text-info">Status komplain akan berubah dari "komplain" menjadi "proses".</p>
+                <div class="mb-3">
+                    <label for="process_notes" class="form-label">Catatan (Opsional)</label>
+                    <textarea class="form-control" id="process_notes" name="notes" rows="3" placeholder="Tambahkan catatan untuk proses komplain..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <form method="POST" class="form-inline">
+                    <input type="hidden" name="action" value="process">
+                    <input type="hidden" name="komplain_id" id="process_komplain_id">
+                    <input type="hidden" name="notes" id="process_notes_hidden">
+                    <button type="submit" class="btn btn-success">Proses Komplain</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
 /* Image Zoom Modal Styles */
 #imageZoomModal .modal-dialog {
@@ -795,6 +877,41 @@ startLayoutBuffer('Komplain');
     gap: 0.5rem;
     justify-content: center;
     flex-wrap: wrap;
+}
+
+/* Process Tooltip Styles */
+.process-tooltip {
+    max-width: 300px;
+    font-size: 0.875rem;
+    line-height: 1.4;
+    border: 1px solid #757677;
+    /* border: none; */
+    border-radius: 8px;
+    padding: 12px;
+    color:rgb(252, 252, 252);
+    box-shadow: none;
+}
+
+.process-tooltip .fw-bold {
+    color:rgb(189, 255, 6);
+    font-weight: 600;
+}
+
+.process-tooltip i {
+    width: 16px;
+    text-align: center;
+    margin-right: 8px;
+    color:rgb(211, 94, 94);
+}
+
+.status-badge {
+    cursor: help;
+    transition: all 0.3s ease;
+}
+
+.status-badge:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .zoom-controls .btn {
@@ -868,6 +985,16 @@ document.addEventListener('DOMContentLoaded', function() {
         editKompainQuill = new Quill('#edit_kompain', quillConfig);
     }
     
+    // Initialize tooltips for process status
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            html: true,
+            placement: 'top',
+            trigger: 'hover focus'
+        });
+    });
+    
     // Handle form submission
     const addForm = document.querySelector('#addKomplainModal form');
     if (addForm) {
@@ -907,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Handle modal focus management for accessibility
-    const modals = ['viewKomplainModal', 'addKomplainModal', 'editKomplainModal', 'imageZoomModal', 'deleteModal'];
+    const modals = ['viewKomplainModal', 'addKomplainModal', 'editKomplainModal', 'imageZoomModal', 'deleteModal', 'processModal'];
     modals.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -928,6 +1055,25 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('delete_subyek').textContent = this.dataset.subyek;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         });
+    });
+    
+    // Process button click
+    document.querySelectorAll('.process-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('process_komplain_id').value = this.dataset.id;
+            document.getElementById('process_subyek').textContent = this.dataset.subyek;
+            // Reset notes field
+            document.getElementById('process_notes').value = '';
+            new bootstrap.Modal(document.getElementById('processModal')).show();
+        });
+    });
+    
+    // Handle process form submission
+    document.getElementById('processModal').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const notes = document.getElementById('process_notes').value;
+        document.getElementById('process_notes_hidden').value = notes;
+        this.querySelector('form').submit();
     });
     
     // Reset form when modal is hidden

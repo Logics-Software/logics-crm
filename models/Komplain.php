@@ -26,10 +26,15 @@ class Komplain {
         
         $query = "SELECT k.*, 
                          u.nama as nama_support, 
-                         kl.namaklien as nama_klien
+                         kl.namaklien as nama_klien,
+                         kp.notes as process_notes,
+                         kp.process_date,
+                         up.nama as process_user_name
                   FROM " . $this->table_name . " k 
                   LEFT JOIN users u ON k.idsupport = u.id 
-                  LEFT JOIN klien kl ON k.idklien = kl.id";
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  LEFT JOIN komplain_process kp ON k.id = kp.komplain_id AND kp.status_to = 'proses'
+                  LEFT JOIN users up ON kp.user_id = up.id";
         
         $where_conditions = [];
         $params = [];
@@ -245,10 +250,15 @@ class Komplain {
         
         $query = "SELECT k.*, 
                          u.nama as nama_support, 
-                         kl.namaklien as nama_klien
+                         kl.namaklien as nama_klien,
+                         kp.notes as process_notes,
+                         kp.process_date,
+                         up.nama as process_user_name
                   FROM " . $this->table_name . " k 
                   LEFT JOIN users u ON k.idsupport = u.id 
-                  LEFT JOIN klien kl ON k.idklien = kl.id";
+                  LEFT JOIN klien kl ON k.idklien = kl.id
+                  LEFT JOIN komplain_process kp ON k.id = kp.komplain_id AND kp.status_to = 'proses'
+                  LEFT JOIN users up ON kp.user_id = up.id";
         
         if ($user_role === 'support' || $user_support) {
             $query .= " WHERE k.idsupport = :user_id";

@@ -153,7 +153,7 @@ $current_user->getUserById($_SESSION['user_id']);
                                     // Build popup content
                                     $solving_popup_content = '<div class="solving-popup">';
                                     $solving_popup_content .= '<div class="popup-header">';
-                                    $solving_popup_content .= '<h6><i class="fas fa-tools text-warning"></i> Solving Menunggu DiUpdate</h6>';
+                                    $solving_popup_content .= '<h6><i class="fas fa-tools text-warning"></i> Solving Menunggu Diupdate</h6>';
                                     $solving_popup_content .= '</div>';
                                     $solving_popup_content .= '<div class="popup-body">';
                                     

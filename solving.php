@@ -425,7 +425,7 @@ ob_start();
                                                     $badge_class = 'bg-warning';
                                                     break;
                                                 case 'update':
-                                                    $status_text = 'Update';
+                                                    $status_text = 'Updated';
                                                     $badge_class = 'bg-success';
                                                     break;
                                                 default:

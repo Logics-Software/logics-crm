@@ -64,141 +64,141 @@ startLayoutBuffer('Dashboard - Logics Software');
                     <h4 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h4>
                 </div>
                 <div class="card-body">
-                    <p class="mb-0">Selamat datang, <strong><?php echo htmlspecialchars($user->nama); ?></strong>! Berikut adalah ringkasan data aplikasi Logics Software.</p>
+
+                <!-- Statistics Cards -->
+                    <div class="row mb-0">
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-primary me-3">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Total Klien</h6>
+                                            <h3 class="mb-0"><?php echo number_format($total_klien); ?></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-success me-3">
+                                            <i class="fas fa-user-check"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Klien Aktif</h6>
+                                            <h3 class="mb-0 text-success"><?php echo number_format($klien_stats['klien_aktif']); ?></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-danger me-3">
+                                            <i class="fas fa-user-times"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Klien Non Aktif</h6>
+                                            <h3 class="mb-0 text-danger"><?php echo number_format($klien_stats['klien_non_aktif']); ?></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-success me-3">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Tagihan Perawatan</h6>
+                                            <h4 class="mb-0">Rp <?php echo number_format($total_tagihan, 0, ',', '.'); ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-warning me-3">
+                                            <i class="fas fa-project-diagram"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Total Project</h6>
+                                            <h3 class="mb-0"><?php echo number_format($project_stats['total_projects']); ?></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-danger me-3">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Nilai Project</h6>
+                                            <h4 class="mb-0">Rp <?php echo number_format($project_stats['total_nilai'], 0, ',', '.'); ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-success me-3">
+                                            <i class="fas fa-wallet"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Total Saldo Project</h6>
+                                            <h4 class="mb-0">Rp <?php echo number_format($project_stats['total_saldo'], 0, ',', '.'); ?></h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center">
+                                        <div class="stat-icon bg-primary me-3">
+                                            <i class="fas fa-tools"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="card-title mb-0">Klien Perawatan</h6>
+                                            <h3 class="mb-0 text-primary"><?php echo number_format($total_klien_perawatan); ?></h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-primary me-3">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Total Klien</h6>
-                            <h3 class="mb-0"><?php echo number_format($total_klien); ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-success me-3">
-                            <i class="fas fa-user-check"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Klien Aktif</h6>
-                            <h3 class="mb-0 text-success"><?php echo number_format($klien_stats['klien_aktif']); ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-danger me-3">
-                            <i class="fas fa-user-times"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Klien Non Aktif</h6>
-                            <h3 class="mb-0 text-danger"><?php echo number_format($klien_stats['klien_non_aktif']); ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-success me-3">
-                            <i class="fas fa-money-bill-wave"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Tagihan Perawatan</h6>
-                            <h4 class="mb-0">Rp <?php echo number_format($total_tagihan, 0, ',', '.'); ?></h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-warning me-3">
-                            <i class="fas fa-project-diagram"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Total Project</h6>
-                            <h3 class="mb-0"><?php echo number_format($project_stats['total_projects']); ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-danger me-3">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Nilai Project</h6>
-                            <h4 class="mb-0">Rp <?php echo number_format($project_stats['total_nilai'], 0, ',', '.'); ?></h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-success me-3">
-                            <i class="fas fa-wallet"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Total Saldo Project</h6>
-                            <h4 class="mb-0">Rp <?php echo number_format($project_stats['total_saldo'], 0, ',', '.'); ?></h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="stat-icon bg-primary me-3">
-                            <i class="fas fa-tools"></i>
-                        </div>
-                        <div>
-                            <h6 class="card-title mb-0">Klien Perawatan</h6>
-                            <h3 class="mb-0 text-primary"><?php echo number_format($total_klien_perawatan); ?></h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
                                         
     <!-- Project Status Chart -->
     <div class="row mb-4">
@@ -250,9 +250,9 @@ startLayoutBuffer('Dashboard - Logics Software');
                             </div>
                         </div>
                         <div class="col-md-2 mb-3">
-                            <div class="card bg-dark text-primary">
+                            <div class="card bg-dark text-warning">
                                 <div class="card-body text-center">
-                                    <h4><?php echo $klien_stats['klien_aktif']; ?></h4>
+                                    <h4><?php echo $total_klien_perawatan; ?></h4>
                                     <small>Perawatan</small>
                                 </div>
                             </div>
